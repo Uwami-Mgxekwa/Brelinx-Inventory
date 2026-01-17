@@ -367,6 +367,7 @@ body {
     height: 32px;
     margin-right: 0.5rem;
     color: #FFFFFF;
+    object-fit: contain; /* For image logos */
 }
 
 .btn-icon {
