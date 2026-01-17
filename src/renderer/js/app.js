@@ -24,6 +24,7 @@ class InventoryApp {
         try {
             console.log('Checking authentication...');
             console.log('SessionManager available:', typeof window.SessionManager);
+            console.log('ElectronAPI available:', typeof window.electronAPI);
             
             if (!window.SessionManager) {
                 console.log('SessionManager not available');
