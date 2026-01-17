@@ -285,14 +285,19 @@
     <script src="../js/login.js"></script>
     <script>
         // Wait for SessionManager to be available before initializing app
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Small delay to ensure SessionManager is fully loaded
-            setTimeout(() => {
+            setTimeout(async () => {
                 if (typeof window.SessionManager !== 'undefined') {
-                    // Initialize the app
-                    const app = new InventoryApp();
-                    app.init(); // Explicitly call init
-                    window.app = app;
+                    try {
+                        // Initialize the app
+                        const app = new InventoryApp();
+                        await app.init(); // Await the async init
+                        window.app = app;
+                    } catch (error) {
+                        console.error('App initialization failed:', error);
+                        window.location.href = 'login.html';
+                    }
                 } else {
                     console.error('SessionManager not loaded, redirecting to login');
                     window.location.href = 'login.html';

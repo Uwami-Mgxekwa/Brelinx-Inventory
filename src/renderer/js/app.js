@@ -6,9 +6,10 @@ class InventoryApp {
         // Don't call init automatically
     }
 
-    init() {
+    async init() {
         // Check authentication first
-        if (!this.checkAuthentication()) {
+        const isAuthenticated = await this.checkAuthentication();
+        if (!isAuthenticated) {
             return;
         }
 
@@ -19,7 +20,7 @@ class InventoryApp {
         this.displayUserInfo();
     }
 
-    checkAuthentication() {
+    async checkAuthentication() {
         try {
             console.log('Checking authentication...');
             console.log('SessionManager available:', typeof window.SessionManager);
@@ -30,7 +31,7 @@ class InventoryApp {
                 return false;
             }
 
-            const isLoggedIn = window.SessionManager.isLoggedIn();
+            const isLoggedIn = await window.SessionManager.isLoggedIn();
             console.log('Is logged in:', isLoggedIn);
             
             if (!isLoggedIn) {
@@ -48,8 +49,8 @@ class InventoryApp {
         }
     }
 
-    displayUserInfo() {
-        const session = window.SessionManager ? window.SessionManager.getSession() : null;
+    async displayUserInfo() {
+        const session = window.SessionManager ? await window.SessionManager.getSession() : null;
         if (session) {
             // You can display user info in the header if needed
             console.log('Logged in as:', session.username);

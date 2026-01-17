@@ -64,6 +64,22 @@ class LoginManager {
         this.clearError();
 
         try {
+            // Check if electronAPI is available
+            if (!window.electronAPI || !window.electronAPI.login) {
+                console.log('ElectronAPI not available, using fallback authentication');
+                // Fallback to client-side validation for development
+                const isValid = this.validateCredentialsFallback(username, password);
+                
+                if (isValid) {
+                    // Store session in localStorage as fallback
+                    this.createSessionFallback(username);
+                    this.redirectToApp();
+                } else {
+                    this.showError('Invalid username or password');
+                }
+                return;
+            }
+
             // Use Electron API for authentication
             const result = await window.electronAPI.login({ username, password });
 
@@ -82,7 +98,29 @@ class LoginManager {
         }
     }
 
-    // Remove the old validateCredentials and createSession methods since we're using Electron API now
+    // Fallback methods for when electronAPI is not available
+    validateCredentialsFallback(username, password) {
+        const validCredentials = [
+            { username: 'admin', password: 'admin123' },
+            { username: 'manager', password: 'manager123' },
+            { username: 'user', password: 'user123' }
+        ];
+
+        return validCredentials.some(cred => 
+            cred.username === username && cred.password === password
+        );
+    }
+
+    createSessionFallback(username) {
+        const sessionData = {
+            username: username,
+            loginTime: new Date().toISOString(),
+            sessionId: Date.now().toString(36) + Math.random().toString(36).substr(2)
+        };
+
+        console.log('Creating fallback session:', sessionData);
+        localStorage.setItem('inventorySession', JSON.stringify(sessionData));
+    }
 
     generateSessionId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -164,40 +202,92 @@ class LoginManager {
 class SessionManager {
     static async isLoggedIn() {
         try {
-            if (!window.electronAPI) {
-                console.log('ElectronAPI not available');
-                return false;
+            // Try Electron API first
+            if (window.electronAPI && window.electronAPI.checkSession) {
+                const result = await window.electronAPI.checkSession();
+                console.log('Session check result:', result);
+                return result.valid;
+            } else {
+                // Fallback to localStorage
+                console.log('Using localStorage fallback for session check');
+                return this.isLoggedInFallback();
             }
-
-            const result = await window.electronAPI.checkSession();
-            console.log('Session check result:', result);
-            return result.valid;
         } catch (error) {
             console.error('Session check error:', error);
+            // Try fallback
+            return this.isLoggedInFallback();
+        }
+    }
+
+    static isLoggedInFallback() {
+        const session = localStorage.getItem('inventorySession');
+        console.log('Checking fallback session:', session);
+        
+        if (!session) {
+            console.log('No fallback session found');
+            return false;
+        }
+
+        try {
+            const sessionData = JSON.parse(session);
+            console.log('Fallback session data:', sessionData);
+            
+            // Check if session is still valid (24 hours)
+            const loginTime = new Date(sessionData.loginTime);
+            const now = new Date();
+            const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
+            
+            console.log('Hours since login:', hoursDiff);
+            const isValid = hoursDiff < 24;
+            console.log('Fallback session valid:', isValid);
+            
+            return isValid;
+        } catch (error) {
+            console.error('Fallback session parsing error:', error);
             return false;
         }
     }
 
     static async getSession() {
         try {
-            if (!window.electronAPI) return null;
-            
-            const result = await window.electronAPI.checkSession();
-            return result.valid ? result.session : null;
+            // Try Electron API first
+            if (window.electronAPI && window.electronAPI.checkSession) {
+                const result = await window.electronAPI.checkSession();
+                return result.valid ? result.session : null;
+            } else {
+                // Fallback to localStorage
+                return this.getSessionFallback();
+            }
         } catch (error) {
             console.error('Get session error:', error);
+            return this.getSessionFallback();
+        }
+    }
+
+    static getSessionFallback() {
+        const session = localStorage.getItem('inventorySession');
+        if (!session) return null;
+
+        try {
+            return JSON.parse(session);
+        } catch (error) {
             return null;
         }
     }
 
     static async logout() {
         try {
-            if (window.electronAPI) {
+            // Try Electron API first
+            if (window.electronAPI && window.electronAPI.logout) {
                 await window.electronAPI.logout();
             }
+            // Also clear localStorage fallback
+            localStorage.removeItem('inventorySession');
             window.location.href = 'login.html';
         } catch (error) {
             console.error('Logout error:', error);
+            // Fallback
+            localStorage.removeItem('inventorySession');
             window.location.href = 'login.html';
         }
     }
