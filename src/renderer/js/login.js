@@ -74,8 +74,11 @@ class LoginManager {
                 // Store session
                 this.createSession(username);
                 
-                // Redirect to main application
-                this.redirectToApp();
+                // Small delay to ensure session is stored before redirect
+                setTimeout(() => {
+                    // Redirect to main application
+                    this.redirectToApp();
+                }, 200);
             } else {
                 this.showError('Invalid username or password');
             }
@@ -110,8 +113,14 @@ class LoginManager {
             sessionId: this.generateSessionId()
         };
 
+        console.log('Creating session:', sessionData);
+
         // Store in localStorage (in a real app, use secure session management)
         localStorage.setItem('inventorySession', JSON.stringify(sessionData));
+        
+        // Verify it was stored
+        const stored = localStorage.getItem('inventorySession');
+        console.log('Session stored:', stored);
     }
 
     generateSessionId() {
