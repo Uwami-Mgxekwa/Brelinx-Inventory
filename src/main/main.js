@@ -21,6 +21,9 @@ function createWindow() {
     show: false
   });
 
+  // Debug: Log preload path
+  console.log('Preload script path:', path.join(__dirname, '../shared/preload.js'));
+
   // Start with login page
   mainWindow.loadFile(path.join(__dirname, '../renderer/pages/login.html'));
 

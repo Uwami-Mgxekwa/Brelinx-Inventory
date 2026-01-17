@@ -5,6 +5,10 @@ class LoginManager {
     }
 
     init() {
+        console.log('LoginManager initializing...');
+        console.log('ElectronAPI available:', typeof window.electronAPI);
+        console.log('ElectronAPI object:', window.electronAPI);
+        
         this.setupEventListeners();
         this.setupBrelinxLink();
     }
