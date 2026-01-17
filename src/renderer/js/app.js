@@ -21,12 +21,24 @@ class InventoryApp {
 
     checkAuthentication() {
         try {
-            if (!window.SessionManager || !window.SessionManager.isLoggedIn()) {
-                console.log('Not authenticated, redirecting to login');
-                // Redirect to login page
+            console.log('Checking authentication...');
+            console.log('SessionManager available:', typeof window.SessionManager);
+            
+            if (!window.SessionManager) {
+                console.log('SessionManager not available');
                 window.location.href = 'login.html';
                 return false;
             }
+
+            const isLoggedIn = window.SessionManager.isLoggedIn();
+            console.log('Is logged in:', isLoggedIn);
+            
+            if (!isLoggedIn) {
+                console.log('Not authenticated, redirecting to login');
+                window.location.href = 'login.html';
+                return false;
+            }
+            
             console.log('Authentication successful');
             return true;
         } catch (error) {
