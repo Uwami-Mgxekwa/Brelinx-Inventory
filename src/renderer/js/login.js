@@ -194,17 +194,29 @@ class LoginManager {
 class SessionManager {
     static isLoggedIn() {
         const session = localStorage.getItem('inventorySession');
-        if (!session) return false;
+        console.log('Checking session:', session);
+        
+        if (!session) {
+            console.log('No session found');
+            return false;
+        }
 
         try {
             const sessionData = JSON.parse(session);
+            console.log('Session data:', sessionData);
+            
             // Check if session is still valid (24 hours)
             const loginTime = new Date(sessionData.loginTime);
             const now = new Date();
             const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
             
-            return hoursDiff < 24;
+            console.log('Hours since login:', hoursDiff);
+            const isValid = hoursDiff < 24;
+            console.log('Session valid:', isValid);
+            
+            return isValid;
         } catch (error) {
+            console.error('Session parsing error:', error);
             return false;
         }
     }
