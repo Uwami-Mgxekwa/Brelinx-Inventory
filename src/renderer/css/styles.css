@@ -447,3 +447,70 @@ body {
         height: 20px;
     }
 }
+/* App Footer Branding */
+.app-footer {
+    background-color: #F2F2F2;
+    border-top: 1px solid #F2F2F2;
+    padding: 0.75rem 2rem;
+    margin-top: auto;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.powered-by {
+    font-size: 0.875rem;
+    color: #1C1C1C;
+    opacity: 0.7;
+    margin: 0;
+}
+
+.brelinx-link {
+    color: #2ECC71;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.brelinx-link:hover {
+    color: #27AE60;
+    text-decoration: underline;
+}
+
+.app-version {
+    font-size: 0.75rem;
+    color: #1C1C1C;
+    opacity: 0.5;
+    margin: 0;
+}
+
+/* Update app container to use flexbox for footer positioning */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Responsive Footer */
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+    
+    .app-footer {
+        padding: 1rem;
+    }
+}

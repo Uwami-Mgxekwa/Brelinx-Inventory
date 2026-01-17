@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
 const path = require('path');
 
 // Keep a global reference of the window object
@@ -17,12 +17,12 @@ function createWindow() {
       enableRemoteModule: false,
       preload: path.join(__dirname, '../shared/preload.js')
     },
-    icon: path.join(__dirname, '../renderer/assets/icons/icon.png'),
+    icon: path.join(__dirname, '../renderer/assets/logo.png'),
     show: false
   });
 
-  // Load the app
-  mainWindow.loadFile(path.join(__dirname, '../renderer/pages/index.html'));
+  // Start with login page
+  mainWindow.loadFile(path.join(__dirname, '../renderer/pages/login.html'));
 
   // Show window when ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {

@@ -7,9 +7,51 @@ class InventoryApp {
     }
 
     init() {
+        // Check authentication first
+        if (!this.checkAuthentication()) {
+            return;
+        }
+
         this.setupEventListeners();
+        this.setupBrelinxLink();
         this.loadInventoryData();
         this.updateDashboard();
+        this.displayUserInfo();
+    }
+
+    checkAuthentication() {
+        if (!window.SessionManager || !window.SessionManager.isLoggedIn()) {
+            // Redirect to login page
+            window.location.href = 'login.html';
+            return false;
+        }
+        return true;
+    }
+
+    displayUserInfo() {
+        const session = window.SessionManager ? window.SessionManager.getSession() : null;
+        if (session) {
+            // You can display user info in the header if needed
+            console.log('Logged in as:', session.username);
+        }
+    }
+
+    setupBrelinxLink() {
+        const brelinxLink = document.getElementById('brelinxFooterLink');
+        if (brelinxLink) {
+            brelinxLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openBrelinxWebsite();
+            });
+        }
+    }
+
+    openBrelinxWebsite() {
+        if (window.electronAPI && window.electronAPI.openExternal) {
+            window.electronAPI.openExternal('https://brelinx.com');
+        } else {
+            window.open('https://brelinx.com', '_blank');
+        }
     }
 
     setupEventListeners() {
@@ -25,6 +67,11 @@ class InventoryApp {
         // Add Item Button
         document.getElementById('addItemBtn').addEventListener('click', () => {
             this.showAddItemModal();
+        });
+
+        // Logout Button
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            this.handleLogout();
         });
 
         // Modal Events
@@ -360,6 +407,16 @@ class InventoryApp {
 
     showAbout() {
         alert('Brelinx Inventory Management System v1.0.0\nDeveloped by Brelinx.com');
+    }
+
+    handleLogout() {
+        if (confirm('Are you sure you want to logout?')) {
+            if (window.SessionManager) {
+                window.SessionManager.logout();
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
     }
 }
 
