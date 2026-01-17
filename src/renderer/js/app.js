@@ -183,7 +183,7 @@ class InventoryApp {
                     </span>
                     ${this.getStockStatus(item.quantity)}
                 </td>
-                <td class="price-display">$${item.price.toFixed(2)}</td>
+                <td class="price-display">R${item.price.toFixed(2)}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="btn btn-small btn-edit" onclick="app.editItem(${item.id})" title="Edit Item">
@@ -247,7 +247,7 @@ class InventoryApp {
         document.getElementById('totalItems').textContent = totalItems;
         document.getElementById('lowStockItems').textContent = lowStockItems;
         document.getElementById('totalCategories').textContent = categories;
-        document.getElementById('totalValue').textContent = `$${totalValue.toFixed(2)}`;
+        document.getElementById('totalValue').textContent = `R${totalValue.toFixed(2)}`;
     }
 
     showAddItemModal() {
