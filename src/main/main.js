@@ -133,3 +133,51 @@ ipcMain.handle('delete-inventory-item', async (event, id) => {
 ipcMain.handle('open-external', async (event, url) => {
   shell.openExternal(url);
 });
+
+// Authentication handlers
+let currentSession = null;
+
+ipcMain.handle('login', async (event, credentials) => {
+  // Validate credentials (in a real app, this would be server-side)
+  const validCredentials = [
+    { username: 'admin', password: 'admin123' },
+    { username: 'manager', password: 'manager123' },
+    { username: 'user', password: 'user123' }
+  ];
+
+  const isValid = validCredentials.some(cred => 
+    cred.username === credentials.username && cred.password === credentials.password
+  );
+
+  if (isValid) {
+    currentSession = {
+      username: credentials.username,
+      loginTime: new Date().toISOString(),
+      sessionId: Date.now().toString(36) + Math.random().toString(36).substr(2)
+    };
+    return { success: true, session: currentSession };
+  } else {
+    return { success: false, error: 'Invalid credentials' };
+  }
+});
+
+ipcMain.handle('check-session', async (event) => {
+  if (!currentSession) return { valid: false };
+
+  // Check if session is still valid (24 hours)
+  const loginTime = new Date(currentSession.loginTime);
+  const now = new Date();
+  const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
+
+  if (hoursDiff < 24) {
+    return { valid: true, session: currentSession };
+  } else {
+    currentSession = null;
+    return { valid: false };
+  }
+});
+
+ipcMain.handle('logout', async (event) => {
+  currentSession = null;
+  return { success: true };
+});

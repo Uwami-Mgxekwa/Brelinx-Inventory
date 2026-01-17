@@ -9,6 +9,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateInventoryItem: (id, item) => ipcRenderer.invoke('update-inventory-item', id, item),
   deleteInventoryItem: (id) => ipcRenderer.invoke('delete-inventory-item', id),
 
+  // Authentication
+  login: (credentials) => ipcRenderer.invoke('login', credentials),
+  checkSession: () => ipcRenderer.invoke('check-session'),
+  logout: () => ipcRenderer.invoke('logout'),
+
   // External links
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
 
