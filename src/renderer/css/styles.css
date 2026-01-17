@@ -132,7 +132,7 @@ body {
     flex: 1;
     padding: 2rem;
     overflow-y: auto;
-    background-color: #f9fafb;
+    background-color: #FFFFFF;
 }
 
 .view {
@@ -145,7 +145,7 @@ body {
 
 .view h2 {
     margin-bottom: 1.5rem;
-    color: #1f2937;
+    color: #1C1C1C;
     font-size: 1.875rem;
     font-weight: 700;
 }
@@ -159,26 +159,27 @@ body {
 }
 
 .stat-card {
-    background: white;
+    background: #FFFFFF;
     padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border-left: 4px solid #4f46e5;
+    box-shadow: 0 1px 3px rgba(28,28,28,0.1);
+    border-left: 4px solid #2ECC71;
 }
 
 .stat-card h3 {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #6b7280;
+    color: #1C1C1C;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    opacity: 0.7;
 }
 
 .stat-number {
     font-size: 2rem;
     font-weight: 700;
-    color: #1f2937;
+    color: #1C1C1C;
 }
 
 /* View Header */
@@ -197,18 +198,32 @@ body {
 
 .search-input {
     padding: 0.5rem 1rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid #F2F2F2;
     border-radius: 6px;
     font-size: 0.875rem;
     width: 250px;
+    background-color: #FFFFFF;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
 }
 
 .filter-select {
     padding: 0.5rem 1rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid #F2F2F2;
     border-radius: 6px;
     font-size: 0.875rem;
-    background-color: white;
+    background-color: #FFFFFF;
+    color: #1C1C1C;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #2ECC71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
 }
 
 /* Modal Styles */
@@ -230,13 +245,13 @@ body {
 }
 
 .modal-content {
-    background-color: white;
+    background-color: #FFFFFF;
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    box-shadow: 0 20px 25px -5px rgba(28,28,28,0.1);
 }
 
 .modal-header {
@@ -244,13 +259,13 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #F2F2F2;
 }
 
 .modal-header h3 {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1f2937;
+    color: #1C1C1C;
 }
 
 .modal-close {
@@ -258,7 +273,8 @@ body {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #6b7280;
+    color: #1C1C1C;
+    opacity: 0.7;
     padding: 0;
     width: 24px;
     height: 24px;
@@ -268,7 +284,7 @@ body {
 }
 
 .modal-close:hover {
-    color: #374151;
+    opacity: 1;
 }
 
 .modal-body {
