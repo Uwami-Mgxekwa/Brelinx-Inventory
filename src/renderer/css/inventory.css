@@ -171,3 +171,93 @@
         gap: 0.25rem;
     }
 }
+/* Enhanced Action Button Styles */
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.btn-small {
+    padding: 0.375rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+}
+
+.btn-small:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(28,28,28,0.1);
+}
+
+.btn-small:active {
+    transform: translateY(0);
+}
+
+.btn-edit:hover {
+    background-color: #27AE60;
+}
+
+.btn-delete:hover {
+    background-color: #000000;
+}
+
+/* Empty State Enhancements */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #1C1C1C;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    display: flex;
+    justify-content: center;
+}
+
+.empty-state-icon svg {
+    width: 48px;
+    height: 48px;
+    color: #2ECC71;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #1C1C1C;
+}
+
+.empty-state p {
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Tooltip Styles */
+.btn-small[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1C1C1C;
+    color: #FFFFFF;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 0.25rem;
+}
+
+.btn-small {
+    position: relative;
+}
