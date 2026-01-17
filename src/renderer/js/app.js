@@ -3,7 +3,7 @@ class InventoryApp {
     constructor() {
         this.currentView = 'dashboard';
         this.inventoryItems = [];
-        this.init();
+        // Don't call init automatically
     }
 
     init() {
@@ -20,12 +20,20 @@ class InventoryApp {
     }
 
     checkAuthentication() {
-        if (!window.SessionManager || !window.SessionManager.isLoggedIn()) {
-            // Redirect to login page
+        try {
+            if (!window.SessionManager || !window.SessionManager.isLoggedIn()) {
+                console.log('Not authenticated, redirecting to login');
+                // Redirect to login page
+                window.location.href = 'login.html';
+                return false;
+            }
+            console.log('Authentication successful');
+            return true;
+        } catch (error) {
+            console.error('Authentication check failed:', error);
             window.location.href = 'login.html';
             return false;
         }
-        return true;
     }
 
     displayUserInfo() {
@@ -420,8 +428,6 @@ class InventoryApp {
     }
 }
 
-// Initialize the application
-const app = new InventoryApp();
-
-// Make app globally available for onclick handlers
-window.app = app;
+// Don't initialize automatically - wait for proper loading
+// const app = new InventoryApp();
+// window.app = app;

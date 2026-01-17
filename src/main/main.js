@@ -128,3 +128,8 @@ ipcMain.handle('delete-inventory-item', async (event, id) => {
   // TODO: Implement database delete
   return { success: true };
 });
+
+// Handle external links
+ipcMain.handle('open-external', async (event, url) => {
+  shell.openExternal(url);
+});
