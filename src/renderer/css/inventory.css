@@ -1,8 +1,8 @@
 /* Inventory Table Styles */
 .inventory-table-container {
-    background: white;
+    background: #FFFFFF;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(28,28,28,0.1);
     overflow: hidden;
 }
 
@@ -12,12 +12,12 @@
 }
 
 .inventory-table th {
-    background-color: #f9fafb;
+    background-color: #F2F2F2;
     padding: 1rem;
     text-align: left;
     font-weight: 600;
-    color: #374151;
-    border-bottom: 1px solid #e5e7eb;
+    color: #1C1C1C;
+    border-bottom: 1px solid #F2F2F2;
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -25,12 +25,12 @@
 
 .inventory-table td {
     padding: 1rem;
-    border-bottom: 1px solid #f3f4f6;
-    color: #1f2937;
+    border-bottom: 1px solid #F2F2F2;
+    color: #1C1C1C;
 }
 
 .inventory-table tbody tr:hover {
-    background-color: #f9fafb;
+    background-color: #F2F2F2;
 }
 
 .inventory-table tbody tr:last-child td {
@@ -50,21 +50,21 @@
 }
 
 .btn-edit {
-    background-color: #f59e0b;
-    color: white;
+    background-color: #2ECC71;
+    color: #FFFFFF;
 }
 
 .btn-edit:hover {
-    background-color: #d97706;
+    background-color: #27AE60;
 }
 
 .btn-delete {
-    background-color: #ef4444;
-    color: white;
+    background-color: #1C1C1C;
+    color: #FFFFFF;
 }
 
 .btn-delete:hover {
-    background-color: #dc2626;
+    background-color: #000000;
 }
 
 /* Status Badges */
@@ -79,18 +79,18 @@
 }
 
 .status-in-stock {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: rgba(46, 204, 113, 0.1);
+    color: #2ECC71;
 }
 
 .status-low-stock {
-    background-color: #fef3c7;
-    color: #92400e;
+    background-color: #F2F2F2;
+    color: #1C1C1C;
 }
 
 .status-out-of-stock {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: rgba(28, 28, 28, 0.1);
+    color: #1C1C1C;
 }
 
 /* Quantity Display */
@@ -99,24 +99,25 @@
 }
 
 .quantity-low {
-    color: #f59e0b;
+    color: #1C1C1C;
 }
 
 .quantity-out {
-    color: #ef4444;
+    color: #1C1C1C;
 }
 
 /* Price Display */
 .price-display {
     font-weight: 600;
-    color: #059669;
+    color: #2ECC71;
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
     padding: 3rem 1rem;
-    color: #6b7280;
+    color: #1C1C1C;
+    opacity: 0.7;
 }
 
 .empty-state-icon {
@@ -128,7 +129,7 @@
 .empty-state h3 {
     font-size: 1.25rem;
     margin-bottom: 0.5rem;
-    color: #374151;
+    color: #1C1C1C;
 }
 
 .empty-state p {
@@ -140,9 +141,9 @@
     display: inline-block;
     width: 20px;
     height: 20px;
-    border: 3px solid #f3f4f6;
+    border: 3px solid #F2F2F2;
     border-radius: 50%;
-    border-top-color: #4f46e5;
+    border-top-color: #2ECC71;
     animation: spin 1s ease-in-out infinite;
 }
 
