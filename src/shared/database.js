@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
@@ -11,7 +11,7 @@ class DatabaseManager {
 
     // Initialize database connection
     async initialize() {
-        return new Promise((resolve, reject) => {
+        try {
             // Ensure database directory exists
             const dbDir = path.dirname(this.dbPath);
             if (!fs.existsSync(dbDir)) {
@@ -19,38 +19,26 @@ class DatabaseManager {
             }
 
             // Create database connection
-            this.db = new sqlite3.Database(this.dbPath, (err) => {
-                if (err) {
-                    console.error('Error opening database:', err);
-                    reject(err);
-                    return;
-                }
-                
-                console.log('Connected to SQLite database');
-                this.createTables()
-                    .then(() => resolve())
-                    .catch(reject);
-            });
-        });
+            this.db = new Database(this.dbPath);
+            console.log('Connected to SQLite database');
+            
+            await this.createTables();
+            return Promise.resolve();
+        } catch (err) {
+            console.error('Error opening database:', err);
+            return Promise.reject(err);
+        }
     }
 
     // Create tables if they don't exist
     async createTables() {
-        return new Promise((resolve, reject) => {
+        try {
+            let schema;
             if (fs.existsSync(this.schemaPath)) {
-                const schema = fs.readFileSync(this.schemaPath, 'utf8');
-                this.db.exec(schema, (err) => {
-                    if (err) {
-                        console.error('Error creating tables:', err);
-                        reject(err);
-                    } else {
-                        console.log('Database tables created successfully');
-                        resolve();
-                    }
-                });
+                schema = fs.readFileSync(this.schemaPath, 'utf8');
             } else {
                 // Fallback schema if file doesn't exist
-                const fallbackSchema = `
+                schema = `
                     CREATE TABLE IF NOT EXISTS products (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         name TEXT NOT NULL,
@@ -96,29 +84,26 @@ class DatabaseManager {
                         FOREIGN KEY (product_id) REFERENCES products (id)
                     );
                 `;
-                
-                this.db.exec(fallbackSchema, (err) => {
-                    if (err) {
-                        console.error('Error creating fallback tables:', err);
-                        reject(err);
-                    } else {
-                        console.log('Fallback database tables created successfully');
-                        resolve();
-                    }
-                });
             }
-        });
+            
+            this.db.exec(schema);
+            console.log('Database tables created successfully');
+            return Promise.resolve();
+        } catch (err) {
+            console.error('Error creating tables:', err);
+            return Promise.reject(err);
+        }
     }
 
     // Product operations
     async addProduct(product) {
-        return new Promise((resolve, reject) => {
-            const sql = `
+        try {
+            const stmt = this.db.prepare(`
                 INSERT INTO products (name, description, sku, category, price, cost, quantity, min_stock, max_stock, supplier, barcode)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
+            `);
             
-            this.db.run(sql, [
+            const result = stmt.run(
                 product.name,
                 product.description,
                 product.sku,
@@ -130,18 +115,16 @@ class DatabaseManager {
                 product.max_stock,
                 product.supplier,
                 product.barcode
-            ], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ id: this.lastID, ...product });
-                }
-            });
-        });
+            );
+            
+            return { id: result.lastInsertRowid, ...product };
+        } catch (err) {
+            throw err;
+        }
     }
 
     async getProducts(filters = {}) {
-        return new Promise((resolve, reject) => {
+        try {
             let sql = 'SELECT * FROM products WHERE 1=1';
             const params = [];
 
@@ -162,103 +145,80 @@ class DatabaseManager {
 
             sql += ' ORDER BY name';
 
-            this.db.all(sql, params, (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+            const stmt = this.db.prepare(sql);
+            return stmt.all(...params);
+        } catch (err) {
+            throw err;
+        }
     }
 
     async getProductById(id) {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM products WHERE id = ?';
-            this.db.get(sql, [id], (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row);
-                }
-            });
-        });
+        try {
+            const stmt = this.db.prepare('SELECT * FROM products WHERE id = ?');
+            return stmt.get(id);
+        } catch (err) {
+            throw err;
+        }
     }
 
     async updateProduct(id, updates) {
-        return new Promise((resolve, reject) => {
+        try {
             const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
             const values = Object.values(updates);
             values.push(id);
 
             const sql = `UPDATE products SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+            const stmt = this.db.prepare(sql);
+            const result = stmt.run(...values);
             
-            this.db.run(sql, values, function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ changes: this.changes });
-                }
-            });
-        });
+            return { changes: result.changes };
+        } catch (err) {
+            throw err;
+        }
     }
 
     async deleteProduct(id) {
-        return new Promise((resolve, reject) => {
-            const sql = 'DELETE FROM products WHERE id = ?';
-            this.db.run(sql, [id], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ changes: this.changes });
-                }
-            });
-        });
+        try {
+            const stmt = this.db.prepare('DELETE FROM products WHERE id = ?');
+            const result = stmt.run(id);
+            return { changes: result.changes };
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Stock movement operations
     async addStockMovement(productId, movementType, quantity, reason = '', reference = '') {
-        return new Promise((resolve, reject) => {
-            this.db.serialize(() => {
-                this.db.run('BEGIN TRANSACTION');
+        const transaction = this.db.transaction(() => {
+            // Add stock movement record
+            const movementStmt = this.db.prepare(`
+                INSERT INTO stock_movements (product_id, movement_type, quantity, reason, reference)
+                VALUES (?, ?, ?, ?, ?)
+            `);
+            
+            const movementResult = movementStmt.run(productId, movementType, quantity, reason, reference);
 
-                // Add stock movement record
-                const movementSql = `
-                    INSERT INTO stock_movements (product_id, movement_type, quantity, reason, reference)
-                    VALUES (?, ?, ?, ?, ?)
-                `;
-                
-                this.db.run(movementSql, [productId, movementType, quantity, reason, reference], function(err) {
-                    if (err) {
-                        this.db.run('ROLLBACK');
-                        reject(err);
-                        return;
-                    }
+            // Update product quantity
+            let quantityChange = quantity;
+            if (movementType === 'OUT') {
+                quantityChange = -quantity;
+            }
 
-                    // Update product quantity
-                    let quantityChange = quantity;
-                    if (movementType === 'OUT') {
-                        quantityChange = -quantity;
-                    }
+            const updateStmt = this.db.prepare('UPDATE products SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            updateStmt.run(quantityChange, productId);
 
-                    const updateSql = 'UPDATE products SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-                    
-                    this.db.run(updateSql, [quantityChange, productId], function(err) {
-                        if (err) {
-                            this.db.run('ROLLBACK');
-                            reject(err);
-                        } else {
-                            this.db.run('COMMIT');
-                            resolve({ movementId: this.lastID, quantityChange });
-                        }
-                    });
-                });
-            });
+            return { movementId: movementResult.lastInsertRowid, quantityChange };
         });
+
+        try {
+            return transaction();
+        } catch (err) {
+            throw err;
+        }
     }
 
     async getStockMovements(productId = null, limit = 100) {
-        return new Promise((resolve, reject) => {
+        try {
             let sql = `
                 SELECT sm.*, p.name as product_name, p.sku
                 FROM stock_movements sm
@@ -274,131 +234,102 @@ class DatabaseManager {
             sql += ' ORDER BY sm.created_at DESC LIMIT ?';
             params.push(limit);
 
-            this.db.all(sql, params, (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+            const stmt = this.db.prepare(sql);
+            return stmt.all(...params);
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Category operations
     async addCategory(name, description = '') {
-        return new Promise((resolve, reject) => {
-            const sql = 'INSERT INTO categories (name, description) VALUES (?, ?)';
-            this.db.run(sql, [name, description], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ id: this.lastID, name, description });
-                }
-            });
-        });
+        try {
+            const stmt = this.db.prepare('INSERT INTO categories (name, description) VALUES (?, ?)');
+            const result = stmt.run(name, description);
+            return { id: result.lastInsertRowid, name, description };
+        } catch (err) {
+            throw err;
+        }
     }
 
     async getCategories() {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM categories ORDER BY name';
-            this.db.all(sql, [], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+        try {
+            const stmt = this.db.prepare('SELECT * FROM categories ORDER BY name');
+            return stmt.all();
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Supplier operations
     async addSupplier(supplier) {
-        return new Promise((resolve, reject) => {
-            const sql = `
+        try {
+            const stmt = this.db.prepare(`
                 INSERT INTO suppliers (name, contact_person, email, phone, address)
                 VALUES (?, ?, ?, ?, ?)
-            `;
+            `);
             
-            this.db.run(sql, [
+            const result = stmt.run(
                 supplier.name,
                 supplier.contact_person,
                 supplier.email,
                 supplier.phone,
                 supplier.address
-            ], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ id: this.lastID, ...supplier });
-                }
-            });
-        });
+            );
+            
+            return { id: result.lastInsertRowid, ...supplier };
+        } catch (err) {
+            throw err;
+        }
     }
 
     async getSuppliers() {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM suppliers ORDER BY name';
-            this.db.all(sql, [], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+        try {
+            const stmt = this.db.prepare('SELECT * FROM suppliers ORDER BY name');
+            return stmt.all();
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Analytics and reports
     async getLowStockProducts() {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM products WHERE quantity <= min_stock ORDER BY quantity ASC';
-            this.db.all(sql, [], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+        try {
+            const stmt = this.db.prepare('SELECT * FROM products WHERE quantity <= min_stock ORDER BY quantity ASC');
+            return stmt.all();
+        } catch (err) {
+            throw err;
+        }
     }
 
     async getInventoryValue() {
-        return new Promise((resolve, reject) => {
-            const sql = `
+        try {
+            const stmt = this.db.prepare(`
                 SELECT 
                     SUM(quantity * cost) as total_cost_value,
                     SUM(quantity * price) as total_retail_value,
                     COUNT(*) as total_products,
                     SUM(quantity) as total_quantity
                 FROM products
-            `;
+            `);
             
-            this.db.get(sql, [], (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row);
-                }
-            });
-        });
+            return stmt.get();
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Close database connection
     async close() {
-        return new Promise((resolve, reject) => {
+        try {
             if (this.db) {
-                this.db.close((err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        console.log('Database connection closed');
-                        resolve();
-                    }
-                });
-            } else {
-                resolve();
+                this.db.close();
+                console.log('Database connection closed');
             }
-        });
+            return Promise.resolve();
+        } catch (err) {
+            return Promise.reject(err);
+        }
     }
 }
 
