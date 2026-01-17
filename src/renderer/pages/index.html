@@ -283,29 +283,34 @@
     </div>
 
     <script src="../js/login.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/inventory.js"></script>
     <script>
-        // Wait for SessionManager to be available before initializing app
+        // Wait for all scripts to load and SessionManager to be available
         document.addEventListener('DOMContentLoaded', async () => {
-            // Small delay to ensure SessionManager is fully loaded
+            // Small delay to ensure all scripts and SessionManager are fully loaded
             setTimeout(async () => {
-                if (typeof window.SessionManager !== 'undefined') {
+                if (typeof window.SessionManager !== 'undefined' && typeof InventoryApp !== 'undefined') {
                     try {
+                        console.log('Initializing InventoryApp...');
                         // Initialize the app
                         const app = new InventoryApp();
                         await app.init(); // Await the async init
                         window.app = app;
+                        console.log('InventoryApp initialized successfully');
                     } catch (error) {
                         console.error('App initialization failed:', error);
                         window.location.href = 'login.html';
                     }
                 } else {
-                    console.error('SessionManager not loaded, redirecting to login');
+                    console.error('Required dependencies not loaded:', {
+                        SessionManager: typeof window.SessionManager,
+                        InventoryApp: typeof InventoryApp
+                    });
                     window.location.href = 'login.html';
                 }
-            }, 100);
+            }, 200);
         });
     </script>
-    <script src="../js/app.js"></script>
-    <script src="../js/inventory.js"></script>
 </body>
 </html>

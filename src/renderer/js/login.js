@@ -131,8 +131,11 @@ class LoginManager {
     }
 
     redirectToApp() {
-        // Redirect to main application
-        window.location.href = 'index.html';
+        console.log('Redirecting to main application...');
+        // Add a small delay to ensure session is properly set
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 100);
     }
 
     togglePassword() {

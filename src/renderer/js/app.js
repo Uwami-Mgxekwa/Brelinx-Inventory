@@ -25,10 +25,13 @@ class InventoryApp {
             console.log('Checking authentication...');
             console.log('SessionManager available:', typeof window.SessionManager);
             console.log('ElectronAPI available:', typeof window.electronAPI);
+            console.log('Current location:', window.location.href);
             
             if (!window.SessionManager) {
-                console.log('SessionManager not available');
-                window.location.href = 'login.html';
+                console.log('SessionManager not available, redirecting to login');
+                if (!window.location.href.includes('login.html')) {
+                    setTimeout(() => window.location.href = 'login.html', 100);
+                }
                 return false;
             }
 
@@ -37,7 +40,9 @@ class InventoryApp {
             
             if (!isLoggedIn) {
                 console.log('Not authenticated, redirecting to login');
-                window.location.href = 'login.html';
+                if (!window.location.href.includes('login.html')) {
+                    setTimeout(() => window.location.href = 'login.html', 100);
+                }
                 return false;
             }
             
@@ -45,7 +50,9 @@ class InventoryApp {
             return true;
         } catch (error) {
             console.error('Authentication check failed:', error);
-            window.location.href = 'login.html';
+            if (!window.location.href.includes('login.html')) {
+                setTimeout(() => window.location.href = 'login.html', 100);
+            }
             return false;
         }
     }

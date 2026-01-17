@@ -1,4 +1,15 @@
 @echo off
+
+:: Check for administrator privileges
+net session >nul 2>&1
+if %errorLevel% == 0 (
+    echo Running with administrator privileges...
+) else (
+    echo Requesting administrator privileges...
+    powershell -Command "Start-Process cmd -ArgumentList '/c \"%~f0\"' -Verb RunAs"
+    exit /b
+)
+
 echo ========================================
 echo  Brelinx Inventory Management Builder
 echo ========================================
