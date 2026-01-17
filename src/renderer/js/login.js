@@ -64,23 +64,15 @@ class LoginManager {
         this.clearError();
 
         try {
-            // Simulate authentication delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Use Electron API for authentication
+            const result = await window.electronAPI.login({ username, password });
 
-            // Check credentials (in a real app, this would be server-side)
-            const isValid = await this.validateCredentials(username, password);
-
-            if (isValid) {
-                // Store session
-                this.createSession(username);
-                
-                // Small delay to ensure session is stored before redirect
-                setTimeout(() => {
-                    // Redirect to main application
-                    this.redirectToApp();
-                }, 200);
+            if (result.success) {
+                console.log('Login successful:', result.session);
+                // Redirect to main application
+                this.redirectToApp();
             } else {
-                this.showError('Invalid username or password');
+                this.showError(result.error || 'Invalid username or password');
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -90,38 +82,7 @@ class LoginManager {
         }
     }
 
-    async validateCredentials(username, password) {
-        // In a real application, this would make an API call to your server
-        // For now, we'll use hardcoded credentials (you can change these)
-        const validCredentials = [
-            { username: 'admin', password: 'admin123' },
-            { username: 'manager', password: 'manager123' },
-            { username: 'user', password: 'user123' }
-        ];
-
-        // Check if credentials match
-        return validCredentials.some(cred => 
-            cred.username === username && cred.password === password
-        );
-    }
-
-    createSession(username) {
-        // Store session information
-        const sessionData = {
-            username: username,
-            loginTime: new Date().toISOString(),
-            sessionId: this.generateSessionId()
-        };
-
-        console.log('Creating session:', sessionData);
-
-        // Store in localStorage (in a real app, use secure session management)
-        localStorage.setItem('inventorySession', JSON.stringify(sessionData));
-        
-        // Verify it was stored
-        const stored = localStorage.getItem('inventorySession');
-        console.log('Session stored:', stored);
-    }
+    // Remove the old validateCredentials and createSession methods since we're using Electron API now
 
     generateSessionId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -201,49 +162,44 @@ class LoginManager {
 
 // Session management utilities
 class SessionManager {
-    static isLoggedIn() {
-        const session = localStorage.getItem('inventorySession');
-        console.log('Checking session:', session);
-        
-        if (!session) {
-            console.log('No session found');
-            return false;
-        }
-
+    static async isLoggedIn() {
         try {
-            const sessionData = JSON.parse(session);
-            console.log('Session data:', sessionData);
-            
-            // Check if session is still valid (24 hours)
-            const loginTime = new Date(sessionData.loginTime);
-            const now = new Date();
-            const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
-            
-            console.log('Hours since login:', hoursDiff);
-            const isValid = hoursDiff < 24;
-            console.log('Session valid:', isValid);
-            
-            return isValid;
+            if (!window.electronAPI) {
+                console.log('ElectronAPI not available');
+                return false;
+            }
+
+            const result = await window.electronAPI.checkSession();
+            console.log('Session check result:', result);
+            return result.valid;
         } catch (error) {
-            console.error('Session parsing error:', error);
+            console.error('Session check error:', error);
             return false;
         }
     }
 
-    static getSession() {
-        const session = localStorage.getItem('inventorySession');
-        if (!session) return null;
-
+    static async getSession() {
         try {
-            return JSON.parse(session);
+            if (!window.electronAPI) return null;
+            
+            const result = await window.electronAPI.checkSession();
+            return result.valid ? result.session : null;
         } catch (error) {
+            console.error('Get session error:', error);
             return null;
         }
     }
 
-    static logout() {
-        localStorage.removeItem('inventorySession');
-        window.location.href = 'login.html';
+    static async logout() {
+        try {
+            if (window.electronAPI) {
+                await window.electronAPI.logout();
+            }
+            window.location.href = 'login.html';
+        } catch (error) {
+            console.error('Logout error:', error);
+            window.location.href = 'login.html';
+        }
     }
 }
 
