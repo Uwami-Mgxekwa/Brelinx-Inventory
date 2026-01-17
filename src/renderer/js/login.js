@@ -8,7 +8,7 @@ class LoginManager {
         console.log('LoginManager initializing...');
         console.log('ElectronAPI available:', typeof window.electronAPI);
         console.log('ElectronAPI object:', window.electronAPI);
-        
+
         this.setupEventListeners();
         this.setupBrelinxLink();
     }
@@ -73,7 +73,7 @@ class LoginManager {
                 console.log('ElectronAPI not available, using fallback authentication');
                 // Fallback to client-side validation for development
                 const isValid = this.validateCredentialsFallback(username, password);
-                
+
                 if (isValid) {
                     // Store session in localStorage as fallback
                     this.createSessionFallback(username);
@@ -110,7 +110,7 @@ class LoginManager {
             { username: 'user', password: 'user123' }
         ];
 
-        return validCredentials.some(cred => 
+        return validCredentials.some(cred =>
             cred.username === username && cred.password === password
         );
     }
@@ -141,7 +141,7 @@ class LoginManager {
     togglePassword() {
         const passwordInput = document.getElementById('password');
         const eyeIcon = document.querySelector('.eye-icon');
-        
+
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
             eyeIcon.innerHTML = `
@@ -160,7 +160,7 @@ class LoginManager {
     setLoadingState(loading) {
         const loginBtn = document.getElementById('loginBtn');
         const btnText = loginBtn.querySelector('span') || loginBtn.lastChild;
-        
+
         if (loading) {
             loginBtn.classList.add('loading');
             loginBtn.disabled = true;
@@ -179,10 +179,10 @@ class LoginManager {
     showError(message) {
         const errorElement = document.getElementById('loginError');
         const errorMessage = document.getElementById('errorMessage');
-        
+
         errorMessage.textContent = message;
         errorElement.style.display = 'flex';
-        
+
         // Auto-hide after 5 seconds
         setTimeout(() => {
             this.clearError();
@@ -205,103 +205,5 @@ class LoginManager {
     }
 }
 
-// Session management utilities
-class SessionManager {
-    static async isLoggedIn() {
-        try {
-            // Try Electron API first
-            if (window.electronAPI && window.electronAPI.checkSession) {
-                const result = await window.electronAPI.checkSession();
-                console.log('Session check result:', result);
-                return result.valid;
-            } else {
-                // Fallback to localStorage
-                console.log('Using localStorage fallback for session check');
-                return this.isLoggedInFallback();
-            }
-        } catch (error) {
-            console.error('Session check error:', error);
-            // Try fallback
-            return this.isLoggedInFallback();
-        }
-    }
-
-    static isLoggedInFallback() {
-        const session = localStorage.getItem('inventorySession');
-        console.log('Checking fallback session:', session);
-        
-        if (!session) {
-            console.log('No fallback session found');
-            return false;
-        }
-
-        try {
-            const sessionData = JSON.parse(session);
-            console.log('Fallback session data:', sessionData);
-            
-            // Check if session is still valid (24 hours)
-            const loginTime = new Date(sessionData.loginTime);
-            const now = new Date();
-            const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
-            
-            console.log('Hours since login:', hoursDiff);
-            const isValid = hoursDiff < 24;
-            console.log('Fallback session valid:', isValid);
-            
-            return isValid;
-        } catch (error) {
-            console.error('Fallback session parsing error:', error);
-            return false;
-        }
-    }
-
-    static async getSession() {
-        try {
-            // Try Electron API first
-            if (window.electronAPI && window.electronAPI.checkSession) {
-                const result = await window.electronAPI.checkSession();
-                return result.valid ? result.session : null;
-            } else {
-                // Fallback to localStorage
-                return this.getSessionFallback();
-            }
-        } catch (error) {
-            console.error('Get session error:', error);
-            return this.getSessionFallback();
-        }
-    }
-
-    static getSessionFallback() {
-        const session = localStorage.getItem('inventorySession');
-        if (!session) return null;
-
-        try {
-            return JSON.parse(session);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    static async logout() {
-        try {
-            // Try Electron API first
-            if (window.electronAPI && window.electronAPI.logout) {
-                await window.electronAPI.logout();
-            }
-            // Also clear localStorage fallback
-            localStorage.removeItem('inventorySession');
-            window.location.href = 'login.html';
-        } catch (error) {
-            console.error('Logout error:', error);
-            // Fallback
-            localStorage.removeItem('inventorySession');
-            window.location.href = 'login.html';
-        }
-    }
-}
-
 // Initialize login manager
 const loginManager = new LoginManager();
-
-// Make SessionManager globally available
-window.SessionManager = SessionManager;
