@@ -8,7 +8,7 @@
     "dev": "electron . --dev",
     "build": "electron-builder",
     "build-win": "electron-builder --win",
-    "build-mac": "electron-builder --mac", 
+    "build-mac": "electron-builder --mac",
     "build-linux": "electron-builder --linux",
     "dist": "electron-builder --publish=never",
     "pack": "electron-builder --dir"
@@ -26,6 +26,7 @@
     "electron-builder": "^24.0.0"
   },
   "dependencies": {
+    "parse": "^8.0.1",
     "sqlite3": "^5.1.6"
   },
   "build": {
@@ -34,6 +35,7 @@
     "directories": {
       "output": "dist"
     },
+    "npmRebuild": false,
     "files": [
       "src/**/*",
       "node_modules/**/*",
@@ -43,18 +45,24 @@
       {
         "from": "src/database/",
         "to": "database/",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "src/renderer/assets/logo.png",
