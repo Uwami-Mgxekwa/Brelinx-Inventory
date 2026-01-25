@@ -645,3 +645,27 @@ body {
     color: white;
     text-decoration: none;
 }
+/* File input help text */
+.file-help {
+    display: block;
+    margin-top: 0.25rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Format examples */
+.format-examples {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.format-examples p {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+/* Multiple template buttons */
+.modal-footer .btn-outline + .btn-outline {
+    margin-left: 0.5rem;
+}

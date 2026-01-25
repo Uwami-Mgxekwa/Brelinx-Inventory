@@ -26,7 +26,7 @@ class CSVImporter {
                     <line x1="16" y1="17" x2="8" y2="17"/>
                     <polyline points="10,9 9,9 8,9"/>
                 </svg>
-                Import CSV
+                Import CSV/TXT
             `;
             
             // Insert before the logout button
@@ -42,7 +42,7 @@ class CSVImporter {
             <div id="importModal" class="modal">
                 <div class="modal-content" style="max-width: 600px;">
                     <div class="modal-header">
-                        <h3>Import Products from CSV</h3>
+                        <h3>Import Products from CSV/TXT File</h3>
                         <button class="modal-close" id="importModalClose">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="18" y1="6" x2="6" y2="18"/>
@@ -52,18 +52,23 @@ class CSVImporter {
                     </div>
                     <div class="modal-body">
                         <div class="import-instructions">
-                            <h4>CSV Format Requirements:</h4>
-                            <p>Your CSV file should have these columns (in any order):</p>
+                            <h4>File Format Requirements:</h4>
+                            <p>Your CSV or TXT file should have these columns (in any order):</p>
                             <div class="csv-format">
                                 <code>name, sku, category, price, cost, quantity, min_stock, max_stock, supplier, barcode, description</code>
                             </div>
                             <p><strong>Required fields:</strong> name, sku, category, price, quantity</p>
                             <p><strong>Optional fields:</strong> cost, min_stock, max_stock, supplier, barcode, description</p>
+                            <div class="format-examples">
+                                <p><strong>CSV format:</strong> Values separated by commas (,)</p>
+                                <p><strong>TXT format:</strong> Values separated by tabs or commas</p>
+                            </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="csvFile">Select CSV File:</label>
-                            <input type="file" id="csvFile" accept=".csv" class="file-input">
+                            <label for="csvFile">Select CSV or TXT File:</label>
+                            <input type="file" id="csvFile" accept=".csv,.txt" class="file-input">
+                            <small class="file-help">Supported formats: CSV (comma-separated) or TXT (tab-separated or comma-separated)</small>
                         </div>
                         
                         <div id="csvPreview" class="csv-preview" style="display: none;">
@@ -93,7 +98,8 @@ class CSVImporter {
                             </svg>
                             Import Products
                         </button>
-                        <a href="#" id="downloadTemplateBtn" class="btn btn-outline">Download Template</a>
+                        <a href="#" id="downloadTemplateBtn" class="btn btn-outline">Download CSV Template</a>
+                        <a href="#" id="downloadTxtTemplateBtn" class="btn btn-outline">Download TXT Template</a>
                     </div>
                 </div>
             </div>
@@ -123,10 +129,16 @@ class CSVImporter {
             this.startImport();
         });
         
-        // Download template
+        // Download CSV template
         document.getElementById('downloadTemplateBtn').addEventListener('click', (e) => {
             e.preventDefault();
-            this.downloadTemplate();
+            this.downloadTemplate('csv');
+        });
+        
+        // Download TXT template
+        document.getElementById('downloadTxtTemplateBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.downloadTemplate('txt');
         });
         
         // Close modal when clicking outside
@@ -159,14 +171,15 @@ class CSVImporter {
     async handleFileSelect(file) {
         if (!file) return;
         
-        if (!file.name.toLowerCase().endsWith('.csv')) {
-            alert('Please select a CSV file.');
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.csv') && !fileName.endsWith('.txt')) {
+            alert('Please select a CSV or TXT file.');
             return;
         }
         
         try {
             const text = await this.readFileAsText(file);
-            this.parseCSV(text);
+            this.parseFile(text, fileName);
         } catch (error) {
             console.error('Error reading file:', error);
             alert('Error reading file. Please try again.');
@@ -182,12 +195,19 @@ class CSVImporter {
         });
     }
 
-    parseCSV(csvText) {
-        // Use Papa Parse library (we'll need to include this)
-        const results = this.simpleCSVParse(csvText);
+    parseFile(fileText, fileName) {
+        let results;
+        
+        if (fileName.endsWith('.txt')) {
+            // Try tab-separated first, then comma-separated for TXT files
+            results = this.parseTXT(fileText);
+        } else {
+            // CSV files
+            results = this.parseCSV(fileText);
+        }
         
         if (results.length === 0) {
-            alert('CSV file appears to be empty.');
+            alert('File appears to be empty or has invalid format.');
             return;
         }
         
@@ -196,26 +216,66 @@ class CSVImporter {
         document.getElementById('startImportBtn').disabled = false;
     }
 
-    // Simple CSV parser (basic implementation)
-    simpleCSVParse(csvText) {
-        const lines = csvText.split('\n').filter(line => line.trim());
+    parseCSV(csvText) {
+        return this.parseDelimitedText(csvText, ',');
+    }
+
+    parseTXT(txtText) {
+        // First try tab-separated
+        let results = this.parseDelimitedText(txtText, '\t');
+        
+        // If tab-separated doesn't work well, try comma-separated
+        if (results.length === 0 || (results.length > 0 && Object.keys(results[0]).length === 1)) {
+            results = this.parseDelimitedText(txtText, ',');
+        }
+        
+        return results;
+    }
+
+    // Enhanced parser that handles both CSV and TXT formats
+    parseDelimitedText(text, delimiter) {
+        const lines = text.split('\n').filter(line => line.trim());
         if (lines.length < 2) return [];
         
-        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        // Parse headers
+        const headers = this.parseLine(lines[0], delimiter).map(h => h.trim().toLowerCase());
         const data = [];
         
         for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-            if (values.length === headers.length) {
+            const values = this.parseLine(lines[i], delimiter);
+            if (values.length >= headers.length) {
                 const row = {};
                 headers.forEach((header, index) => {
-                    row[header.toLowerCase()] = values[index];
+                    row[header] = values[index] ? values[index].trim() : '';
                 });
                 data.push(row);
             }
         }
         
         return data;
+    }
+
+    // Parse a single line handling quoted values
+    parseLine(line, delimiter) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === delimiter && !inQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        
+        result.push(current);
+        return result.map(value => value.replace(/^"|"$/g, '')); // Remove surrounding quotes
     }
 
     showPreview(previewData) {
@@ -355,17 +415,32 @@ class CSVImporter {
         }
     }
 
-    downloadTemplate() {
-        const template = `name,sku,category,price,cost,quantity,min_stock,max_stock,supplier,barcode,description
+    downloadTemplate(format = 'csv') {
+        let template, filename, mimeType;
+        
+        if (format === 'txt') {
+            // Tab-separated format for TXT
+            template = `name\tsku\tcategory\tprice\tcost\tquantity\tmin_stock\tmax_stock\tsupplier\tbarcode\tdescription
+Laptop Computer\tLAP001\tElectronics\t999.99\t750.00\t15\t5\t50\tTech Supplier\t123456789012\tHigh-performance laptop
+Office Chair\tCHR001\tFurniture\t299.99\t200.00\t8\t2\t20\tOffice Supplies Inc\t234567890123\tErgonomic office chair
+Wireless Mouse\tMOU001\tElectronics\t49.99\t25.00\t25\t10\t100\tTech Supplier\t345678901234\tBluetooth wireless mouse`;
+            filename = 'inventory_template.txt';
+            mimeType = 'text/plain';
+        } else {
+            // Comma-separated format for CSV
+            template = `name,sku,category,price,cost,quantity,min_stock,max_stock,supplier,barcode,description
 "Laptop Computer","LAP001","Electronics",999.99,750.00,15,5,50,"Tech Supplier","123456789012","High-performance laptop"
 "Office Chair","CHR001","Furniture",299.99,200.00,8,2,20,"Office Supplies Inc","234567890123","Ergonomic office chair"
 "Wireless Mouse","MOU001","Electronics",49.99,25.00,25,10,100,"Tech Supplier","345678901234","Bluetooth wireless mouse"`;
+            filename = 'inventory_template.csv';
+            mimeType = 'text/csv';
+        }
         
-        const blob = new Blob([template], { type: 'text/csv' });
+        const blob = new Blob([template], { type: mimeType });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'inventory_template.csv';
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
