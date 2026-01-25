@@ -669,3 +669,45 @@ body {
 .modal-footer .btn-outline + .btn-outline {
     margin-left: 0.5rem;
 }
+/* Duplicate detection dialog */
+.duplicate-list {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 1rem 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.duplicate-item {
+    margin-bottom: 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.duplicate-more {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #6c757d;
+}
+
+.btn-warning {
+    background: #ffc107;
+    border: 1px solid #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+    border-color: #d39e00;
+}
+
+/* Import summary enhancements */
+.import-summary p {
+    margin: 0.25rem 0;
+}
+
+.import-summary p:first-child {
+    margin-bottom: 0.5rem;
+}

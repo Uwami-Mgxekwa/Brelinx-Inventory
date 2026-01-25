@@ -135,6 +135,15 @@ ipcMain.handle('get-inventory-items', async () => {
   }
 });
 
+ipcMain.handle('get-product-by-sku', async (event, sku) => {
+  try {
+    return await back4AppManager.getProductBySku(sku);
+  } catch (error) {
+    console.error('Error getting product by SKU:', error);
+    return null;
+  }
+});
+
 ipcMain.handle('add-inventory-item', async (event, item) => {
   try {
     const result = await back4AppManager.addProduct(item);

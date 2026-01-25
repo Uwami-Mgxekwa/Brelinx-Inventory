@@ -326,21 +326,48 @@ class CSVImporter {
         
         let successful = 0;
         let failed = 0;
+        let skipped = 0;
         const errors = [];
+        const duplicates = [];
         
+        // First pass: Check for duplicates
+        progressText.textContent = 'Checking for existing products...';
+        const duplicateCheck = await this.checkForDuplicates();
+        
+        if (duplicateCheck.duplicates.length > 0) {
+            const action = await this.showDuplicateDialog(duplicateCheck.duplicates);
+            if (action === 'cancel') {
+                progressDiv.style.display = 'none';
+                return;
+            } else if (action === 'skip') {
+                // Remove duplicates from import list
+                this.csvData = this.csvData.filter(row => 
+                    !duplicateCheck.duplicates.some(dup => dup.sku === row.sku)
+                );
+                skipped = duplicateCheck.duplicates.length;
+            }
+            // If action === 'update', we'll update existing products
+        }
+        
+        // Second pass: Import/Update products
         for (let i = 0; i < this.csvData.length; i++) {
             const row = this.csvData[i];
             const progress = ((i + 1) / this.csvData.length) * 100;
             
             progressFill.style.width = `${progress}%`;
-            progressText.textContent = `Importing ${i + 1} of ${this.csvData.length}...`;
+            progressText.textContent = `Processing ${i + 1} of ${this.csvData.length}...`;
             
             try {
-                await this.importRow(row);
+                const existingProduct = duplicateCheck.duplicates.find(dup => dup.sku === row.sku);
+                if (existingProduct && duplicateCheck.action === 'update') {
+                    await this.updateExistingProduct(existingProduct.id, row);
+                } else {
+                    await this.importRow(row);
+                }
                 successful++;
             } catch (error) {
                 failed++;
-                errors.push(`Row ${i + 1}: ${error.message}`);
+                errors.push(`Row ${i + 1} (${row.sku}): ${error.message}`);
                 console.error(`Import error for row ${i + 1}:`, error);
             }
             
@@ -353,7 +380,8 @@ class CSVImporter {
         resultsContent.innerHTML = `
             <div class="import-summary">
                 <p><strong>Import Complete!</strong></p>
-                <p>✅ Successfully imported: ${successful} products</p>
+                <p>✅ Successfully processed: ${successful} products</p>
+                ${skipped > 0 ? `<p>⏭️ Skipped (duplicates): ${skipped} products</p>` : ''}
                 ${failed > 0 ? `<p>❌ Failed: ${failed} products</p>` : ''}
             </div>
             ${errors.length > 0 ? `
@@ -371,6 +399,122 @@ class CSVImporter {
         // Refresh the inventory table if we're on the inventory view
         if (window.app && typeof window.app.loadInventoryData === 'function') {
             await window.app.loadInventoryData();
+        }
+    }
+
+    async checkForDuplicates() {
+        const duplicates = [];
+        
+        for (const row of this.csvData) {
+            if (!row.sku) continue;
+            
+            try {
+                if (window.electronAPI && window.electronAPI.getProductBySku) {
+                    const existing = await window.electronAPI.getProductBySku(row.sku);
+                    if (existing) {
+                        duplicates.push({
+                            sku: row.sku,
+                            name: row.name,
+                            id: existing.id,
+                            existingName: existing.name
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking for duplicate SKU:', row.sku, error);
+            }
+        }
+        
+        return { duplicates };
+    }
+
+    async showDuplicateDialog(duplicates) {
+        return new Promise((resolve) => {
+            const duplicateList = duplicates.slice(0, 5).map(dup => 
+                `• ${dup.sku} - "${dup.name}"`
+            ).join('\n');
+            
+            const moreText = duplicates.length > 5 ? `\n... and ${duplicates.length - 5} more` : '';
+            
+            const message = `Found ${duplicates.length} product(s) that already exist:\n\n${duplicateList}${moreText}\n\nWhat would you like to do?`;
+            
+            // Create custom dialog
+            const dialogHTML = `
+                <div id="duplicateDialog" class="modal active">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3>Duplicate Products Found</h3>
+                        </div>
+                        <div class="modal-body">
+                            <p>Found <strong>${duplicates.length}</strong> product(s) that already exist:</p>
+                            <div class="duplicate-list">
+                                ${duplicates.slice(0, 5).map(dup => 
+                                    `<div class="duplicate-item">• <strong>${dup.sku}</strong> - "${dup.name}"</div>`
+                                ).join('')}
+                                ${duplicates.length > 5 ? `<div class="duplicate-more">... and ${duplicates.length - 5} more</div>` : ''}
+                            </div>
+                            <p>What would you like to do?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="cancelDuplicateBtn">Cancel Import</button>
+                            <button type="button" class="btn btn-warning" id="skipDuplicateBtn">Skip Duplicates</button>
+                            <button type="button" class="btn btn-primary" id="updateDuplicateBtn">Update Existing</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+            
+            document.getElementById('cancelDuplicateBtn').onclick = () => {
+                document.getElementById('duplicateDialog').remove();
+                resolve('cancel');
+            };
+            
+            document.getElementById('skipDuplicateBtn').onclick = () => {
+                document.getElementById('duplicateDialog').remove();
+                resolve('skip');
+            };
+            
+            document.getElementById('updateDuplicateBtn').onclick = () => {
+                document.getElementById('duplicateDialog').remove();
+                resolve('update');
+            };
+        });
+    }
+
+    async updateExistingProduct(productId, row) {
+        // Prepare update data
+        const updates = {
+            name: row.name,
+            description: row.description || '',
+            category: row.category,
+            price: parseFloat(row.price) || 0,
+            cost: parseFloat(row.cost) || 0,
+            quantity: parseInt(row.quantity) || 0,
+            min_stock: parseInt(row.min_stock) || 0,
+            max_stock: parseInt(row.max_stock) || null,
+            supplier: row.supplier || '',
+            barcode: row.barcode || ''
+        };
+        
+        // Validate data types
+        if (isNaN(updates.price) || updates.price < 0) {
+            throw new Error('Invalid price value');
+        }
+        
+        if (isNaN(updates.quantity) || updates.quantity < 0) {
+            throw new Error('Invalid quantity value');
+        }
+        
+        // Update via Electron API
+        if (window.electronAPI && window.electronAPI.updateInventoryItem) {
+            const result = await window.electronAPI.updateInventoryItem(productId, updates);
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to update product');
+            }
+        } else {
+            throw new Error('Electron API not available');
         }
     }
 

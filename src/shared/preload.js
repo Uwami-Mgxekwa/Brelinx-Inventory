@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   // Inventory operations
   getInventoryItems: () => ipcRenderer.invoke('get-inventory-items'),
+  getProductBySku: (sku) => ipcRenderer.invoke('get-product-by-sku', sku),
   addInventoryItem: (item) => ipcRenderer.invoke('add-inventory-item', item),
   updateInventoryItem: (id, item) => ipcRenderer.invoke('update-inventory-item', id, item),
   deleteInventoryItem: (id) => ipcRenderer.invoke('delete-inventory-item', id),

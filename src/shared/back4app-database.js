@@ -64,6 +64,38 @@ class Back4AppDatabaseManager {
         }
     }
 
+    // Check if product with SKU already exists
+    async getProductBySku(sku) {
+        try {
+            const Product = Parse.Object.extend("Product");
+            const query = new Parse.Query(Product);
+            query.equalTo("sku", sku);
+            
+            const product = await query.first();
+            
+            if (!product) return null;
+            
+            return {
+                id: product.id,
+                name: product.get('name'),
+                description: product.get('description'),
+                sku: product.get('sku'),
+                category: product.get('category'),
+                price: product.get('price'),
+                cost: product.get('cost'),
+                quantity: product.get('quantity'),
+                min_stock: product.get('minStock'),
+                max_stock: product.get('maxStock'),
+                supplier: product.get('supplier'),
+                barcode: product.get('barcode'),
+                created_at: product.get('createdAt'),
+                updated_at: product.get('updatedAt')
+            };
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async getProducts(filters = {}) {
         try {
             const Product = Parse.Object.extend("Product");

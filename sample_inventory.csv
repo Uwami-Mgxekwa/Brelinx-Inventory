@@ -1,0 +1,11 @@
+name,sku,category,price,cost,quantity,min_stock,max_stock,supplier,barcode,description
+"Dell Laptop XPS 13","LAP001","Electronics",1299.99,950.00,12,3,25,"Tech Solutions Inc","123456789012","13-inch ultrabook with Intel i7 processor"
+"Ergonomic Office Chair","CHR001","Furniture",349.99,220.00,8,2,15,"Office Comfort Ltd","234567890123","Adjustable height chair with lumbar support"
+"Wireless Bluetooth Mouse","MOU001","Electronics",79.99,45.00,35,10,100,"Tech Solutions Inc","345678901234","Precision wireless mouse with 3-year warranty"
+"Standing Desk Converter","DSK001","Furniture",299.99,180.00,6,1,12,"Workspace Pro","456789012345","Height-adjustable desk converter for ergonomic work"
+"USB-C Hub 7-in-1","HUB001","Electronics",89.99,55.00,20,5,50,"Tech Solutions Inc","567890123456","Multi-port hub with HDMI, USB 3.0, and SD card slots"
+"LED Monitor 24 inch","MON001","Electronics",199.99,130.00,15,4,30,"Display Masters","678901234567","Full HD IPS monitor with adjustable stand"
+"Mechanical Keyboard RGB","KEY001","Electronics",149.99,85.00,18,5,40,"Gaming Gear Co","789012345678","Cherry MX switches with customizable RGB lighting"
+"Noise Cancelling Headphones","HDP001","Electronics",249.99,160.00,10,3,20,"Audio Pro","890123456789","Active noise cancellation with 30-hour battery life"
+"Portable SSD 1TB","SSD001","Electronics",129.99,80.00,25,8,60,"Storage Solutions","901234567890","High-speed external SSD with USB 3.2 Gen 2"
+"Desk Organizer Set","ORG001","Office Supplies",39.99,22.00,30,10,75,"Office Comfort Ltd","012345678901","Bamboo desk organizer with multiple compartments"
