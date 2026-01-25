@@ -9,6 +9,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateInventoryItem: (id, item) => ipcRenderer.invoke('update-inventory-item', id, item),
   deleteInventoryItem: (id) => ipcRenderer.invoke('delete-inventory-item', id),
 
+  // Stock movement operations
+  addStockMovement: (productId, movementType, quantity, reason, reference) => 
+    ipcRenderer.invoke('add-stock-movement', productId, movementType, quantity, reason, reference),
+  getStockMovements: (productId, limit) => ipcRenderer.invoke('get-stock-movements', productId, limit),
+
+  // Category operations
+  getCategories: () => ipcRenderer.invoke('get-categories'),
+  addCategory: (name, description) => ipcRenderer.invoke('add-category', name, description),
+
+  // Supplier operations
+  getSuppliers: () => ipcRenderer.invoke('get-suppliers'),
+  addSupplier: (supplier) => ipcRenderer.invoke('add-supplier', supplier),
+
+  // Analytics operations
+  getLowStockProducts: () => ipcRenderer.invoke('get-low-stock-products'),
+  getInventoryValue: () => ipcRenderer.invoke('get-inventory-value'),
+
   // Authentication
   login: (credentials) => ipcRenderer.invoke('login', credentials),
   checkSession: () => ipcRenderer.invoke('check-session'),

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
 const path = require('path');
+const back4AppManager = require('../shared/back4app-database');
 
 // Keep a global reference of the window object
 let mainWindow;
@@ -43,8 +44,21 @@ function createWindow() {
   });
 }
 
+// Initialize Back4App when app is ready
+async function initializeApp() {
+  try {
+    await back4AppManager.initialize();
+    console.log('Back4App initialized successfully');
+    createWindow();
+  } catch (error) {
+    console.error('Failed to initialize Back4App:', error);
+    // Still create window but with fallback functionality
+    createWindow();
+  }
+}
+
 // This method will be called when Electron has finished initialization
-app.whenReady().then(createWindow);
+app.whenReady().then(initializeApp);
 
 // Quit when all windows are closed
 app.on('window-all-closed', () => {
@@ -111,25 +125,128 @@ const template = [
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
 
-// IPC handlers for database operations
+// IPC handlers for database operations using Back4App
 ipcMain.handle('get-inventory-items', async () => {
-  // TODO: Implement database query
-  return [];
+  try {
+    return await back4AppManager.getProducts();
+  } catch (error) {
+    console.error('Error getting inventory items:', error);
+    return [];
+  }
 });
 
 ipcMain.handle('add-inventory-item', async (event, item) => {
-  // TODO: Implement database insert
-  return { success: true, id: Date.now() };
+  try {
+    const result = await back4AppManager.addProduct(item);
+    return { success: true, id: result.id, item: result };
+  } catch (error) {
+    console.error('Error adding inventory item:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 ipcMain.handle('update-inventory-item', async (event, id, item) => {
-  // TODO: Implement database update
-  return { success: true };
+  try {
+    await back4AppManager.updateProduct(id, item);
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating inventory item:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 ipcMain.handle('delete-inventory-item', async (event, id) => {
-  // TODO: Implement database delete
-  return { success: true };
+  try {
+    await back4AppManager.deleteProduct(id);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting inventory item:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Stock movement operations
+ipcMain.handle('add-stock-movement', async (event, productId, movementType, quantity, reason, reference) => {
+  try {
+    const result = await back4AppManager.addStockMovement(productId, movementType, quantity, reason, reference);
+    return { success: true, result };
+  } catch (error) {
+    console.error('Error adding stock movement:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-stock-movements', async (event, productId, limit) => {
+  try {
+    return await back4AppManager.getStockMovements(productId, limit);
+  } catch (error) {
+    console.error('Error getting stock movements:', error);
+    return [];
+  }
+});
+
+// Category operations
+ipcMain.handle('get-categories', async () => {
+  try {
+    return await back4AppManager.getCategories();
+  } catch (error) {
+    console.error('Error getting categories:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('add-category', async (event, name, description) => {
+  try {
+    const result = await back4AppManager.addCategory(name, description);
+    return { success: true, category: result };
+  } catch (error) {
+    console.error('Error adding category:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Supplier operations
+ipcMain.handle('get-suppliers', async () => {
+  try {
+    return await back4AppManager.getSuppliers();
+  } catch (error) {
+    console.error('Error getting suppliers:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('add-supplier', async (event, supplier) => {
+  try {
+    const result = await back4AppManager.addSupplier(supplier);
+    return { success: true, supplier: result };
+  } catch (error) {
+    console.error('Error adding supplier:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Analytics operations
+ipcMain.handle('get-low-stock-products', async () => {
+  try {
+    return await back4AppManager.getLowStockProducts();
+  } catch (error) {
+    console.error('Error getting low stock products:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-inventory-value', async () => {
+  try {
+    return await back4AppManager.getInventoryValue();
+  } catch (error) {
+    console.error('Error getting inventory value:', error);
+    return {
+      total_cost_value: 0,
+      total_retail_value: 0,
+      total_products: 0,
+      total_quantity: 0
+    };
+  }
 });
 
 // Handle external links
@@ -137,50 +254,46 @@ ipcMain.handle('open-external', async (event, url) => {
   shell.openExternal(url);
 });
 
-// Authentication handlers
+// Authentication handlers using Back4App
 let currentSession = null;
 
 ipcMain.handle('login', async (event, credentials) => {
-  // Validate credentials (in a real app, this would be server-side)
-  const validCredentials = [
-    { username: 'admin', password: 'admin123' },
-    { username: 'manager', password: 'manager123' },
-    { username: 'user', password: 'user123' }
-  ];
-
-  const isValid = validCredentials.some(cred => 
-    cred.username === credentials.username && cred.password === credentials.password
-  );
-
-  if (isValid) {
-    currentSession = {
-      username: credentials.username,
-      loginTime: new Date().toISOString(),
-      sessionId: Date.now().toString(36) + Math.random().toString(36).substr(2)
-    };
-    return { success: true, session: currentSession };
-  } else {
-    return { success: false, error: 'Invalid credentials' };
+  try {
+    const result = await back4AppManager.authenticateUser(credentials.username, credentials.password);
+    if (result.success) {
+      currentSession = result.session;
+    }
+    return result;
+  } catch (error) {
+    console.error('Login error:', error);
+    return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('check-session', async (event) => {
-  if (!currentSession) return { valid: false };
-
-  // Check if session is still valid (24 hours)
-  const loginTime = new Date(currentSession.loginTime);
-  const now = new Date();
-  const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
-
-  if (hoursDiff < 24) {
-    return { valid: true, session: currentSession };
-  } else {
+  try {
+    if (!currentSession) return { valid: false };
+    
+    const result = await back4AppManager.checkSession(currentSession.sessionToken);
+    if (!result.valid) {
+      currentSession = null;
+    }
+    return result;
+  } catch (error) {
+    console.error('Session check error:', error);
     currentSession = null;
     return { valid: false };
   }
 });
 
 ipcMain.handle('logout', async (event) => {
-  currentSession = null;
-  return { success: true };
+  try {
+    await back4AppManager.logout();
+    currentSession = null;
+    return { success: true };
+  } catch (error) {
+    console.error('Logout error:', error);
+    currentSession = null;
+    return { success: true }; // Always succeed logout
+  }
 });
