@@ -440,7 +440,10 @@ class Back4AppDatabaseManager {
     // Authentication methods
     async authenticateUser(username, password) {
         try {
+            console.log('Back4App: Attempting to authenticate user:', username);
             const user = await Parse.User.logIn(username, password);
+            console.log('Back4App: Authentication successful for:', username);
+            
             return {
                 success: true,
                 session: {
@@ -451,6 +454,7 @@ class Back4AppDatabaseManager {
                 }
             };
         } catch (err) {
+            console.error('Back4App: Authentication failed for:', username, err.message);
             return {
                 success: false,
                 error: err.message || 'Invalid credentials'
@@ -462,24 +466,23 @@ class Back4AppDatabaseManager {
         try {
             if (!sessionToken) return { valid: false };
             
-            const query = new Parse.Query(Parse.Session);
-            query.equalTo('sessionToken', sessionToken);
-            const session = await query.first({ useMasterKey: true });
-            
-            if (session) {
-                const user = session.get('user');
+            // For now, let's use a simpler session validation
+            // Parse.Session queries require master key which we shouldn't use in client
+            const currentUser = Parse.User.current();
+            if (currentUser && currentUser.getSessionToken() === sessionToken) {
                 return {
                     valid: true,
                     session: {
-                        username: user.get('username'),
+                        username: currentUser.get('username'),
                         sessionToken: sessionToken,
-                        userId: user.id
+                        userId: currentUser.id
                     }
                 };
             }
             
             return { valid: false };
         } catch (err) {
+            console.error('Session check error:', err);
             return { valid: false };
         }
     }

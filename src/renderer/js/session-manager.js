@@ -2,18 +2,20 @@
 class SessionManager {
     static async isLoggedIn() {
         try {
+            console.log('SessionManager: Checking if logged in...');
             // Try Electron API first
             if (window.electronAPI && window.electronAPI.checkSession) {
+                console.log('SessionManager: Using Electron API for session check');
                 const result = await window.electronAPI.checkSession();
-                console.log('Session check result:', result);
+                console.log('SessionManager: Session check result:', result);
                 return result.valid;
             } else {
                 // Fallback to localStorage
-                console.log('Using localStorage fallback for session check');
+                console.log('SessionManager: Using localStorage fallback for session check');
                 return this.isLoggedInFallback();
             }
         } catch (error) {
-            console.error('Session check error:', error);
+            console.error('SessionManager: Session check error:', error);
             // Try fallback
             return this.isLoggedInFallback();
         }

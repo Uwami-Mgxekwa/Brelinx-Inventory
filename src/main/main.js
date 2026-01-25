@@ -259,9 +259,13 @@ let currentSession = null;
 
 ipcMain.handle('login', async (event, credentials) => {
   try {
+    console.log('Attempting login for:', credentials.username);
     const result = await back4AppManager.authenticateUser(credentials.username, credentials.password);
+    console.log('Login result:', result.success ? 'Success' : 'Failed');
+    
     if (result.success) {
       currentSession = result.session;
+      console.log('Session stored:', currentSession.username);
     }
     return result;
   } catch (error) {
@@ -272,13 +276,28 @@ ipcMain.handle('login', async (event, credentials) => {
 
 ipcMain.handle('check-session', async (event) => {
   try {
-    if (!currentSession) return { valid: false };
+    console.log('Checking session, current session exists:', !!currentSession);
     
-    const result = await back4AppManager.checkSession(currentSession.sessionToken);
-    if (!result.valid) {
-      currentSession = null;
+    if (!currentSession) {
+      console.log('No current session found');
+      return { valid: false };
     }
-    return result;
+    
+    // For now, let's trust the session if it exists and is recent
+    const loginTime = new Date(currentSession.loginTime);
+    const now = new Date();
+    const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
+    
+    console.log('Session age (hours):', hoursDiff);
+    
+    if (hoursDiff < 24) {
+      console.log('Session is valid');
+      return { valid: true, session: currentSession };
+    } else {
+      console.log('Session expired');
+      currentSession = null;
+      return { valid: false };
+    }
   } catch (error) {
     console.error('Session check error:', error);
     currentSession = null;
@@ -288,6 +307,7 @@ ipcMain.handle('check-session', async (event) => {
 
 ipcMain.handle('logout', async (event) => {
   try {
+    console.log('Logging out user');
     await back4AppManager.logout();
     currentSession = null;
     return { success: true };

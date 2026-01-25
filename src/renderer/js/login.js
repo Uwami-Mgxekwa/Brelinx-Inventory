@@ -85,13 +85,16 @@ class LoginManager {
             }
 
             // Use Electron API for authentication
+            console.log('Using Electron API for login');
             const result = await window.electronAPI.login({ username, password });
+            console.log('Login API result:', result);
 
             if (result.success) {
-                console.log('Login successful:', result.session);
+                console.log('Login successful, session:', result.session);
                 // Redirect to main application
                 this.redirectToApp();
             } else {
+                console.log('Login failed:', result.error);
                 this.showError(result.error || 'Invalid username or password');
             }
         } catch (error) {
@@ -132,10 +135,11 @@ class LoginManager {
 
     redirectToApp() {
         console.log('Redirecting to main application...');
-        // Add a small delay to ensure session is properly set
+        // Add a delay to ensure session is properly set
         setTimeout(() => {
+            console.log('Performing redirect to index.html');
             window.location.href = 'index.html';
-        }, 100);
+        }, 300); // Increased delay
     }
 
     togglePassword() {

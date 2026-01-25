@@ -304,8 +304,12 @@
     <script>
         // Wait for all scripts to load and SessionManager to be available
         document.addEventListener('DOMContentLoaded', async () => {
-            // Small delay to ensure all scripts and SessionManager are fully loaded
+            // Increased delay to ensure all scripts and SessionManager are fully loaded
             setTimeout(async () => {
+                console.log('Initializing app...');
+                console.log('SessionManager available:', typeof window.SessionManager);
+                console.log('InventoryApp available:', typeof InventoryApp);
+                
                 if (typeof window.SessionManager !== 'undefined' && typeof InventoryApp !== 'undefined') {
                     try {
                         console.log('Initializing InventoryApp...');
@@ -325,7 +329,7 @@
                     });
                     window.location.href = 'login.html';
                 }
-            }, 200);
+            }, 500); // Increased from 200ms to 500ms
         });
     </script>
 </body>
