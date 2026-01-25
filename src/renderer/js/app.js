@@ -187,6 +187,13 @@ class InventoryApp {
         }
     }
 
+    // Manual refresh method that can be called from anywhere
+    async refreshInventory() {
+        console.log('Refreshing inventory data...');
+        await this.loadInventoryData();
+        console.log('Inventory data refreshed');
+    }
+
     getSampleData() {
         return [
             {

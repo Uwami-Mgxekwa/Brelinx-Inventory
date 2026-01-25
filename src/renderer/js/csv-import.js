@@ -29,12 +29,81 @@ class CSVImporter {
                 Import CSV/TXT
             `;
             
+            // Add refresh button
+            const refreshBtn = document.createElement('button');
+            refreshBtn.id = 'refreshBtn';
+            refreshBtn.className = 'btn btn-secondary';
+            refreshBtn.innerHTML = `
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23,4 23,10 17,10"/>
+                    <polyline points="1,20 1,14 7,14"/>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                </svg>
+                Refresh
+            `;
+            
             // Insert before the logout button
             const logoutBtn = document.getElementById('logoutBtn');
             headerActions.insertBefore(importBtn, logoutBtn);
+            headerActions.insertBefore(refreshBtn, logoutBtn);
             
             importBtn.addEventListener('click', () => this.showImportModal());
+            refreshBtn.addEventListener('click', () => this.refreshData());
         }
+    }
+
+    async refreshData() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const originalHTML = refreshBtn.innerHTML;
+        
+        // Show loading state
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = `
+            <svg class="btn-icon spinning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23,4 23,10 17,10"/>
+                <polyline points="1,20 1,14 7,14"/>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            Refreshing...
+        `;
+        
+        try {
+            // Refresh inventory data
+            if (window.app && typeof window.app.loadInventoryData === 'function') {
+                await window.app.loadInventoryData();
+                
+                // Show success feedback
+                this.showRefreshSuccess();
+            }
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+            alert('Failed to refresh data. Please try again.');
+        } finally {
+            // Restore button state
+            setTimeout(() => {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalHTML;
+            }, 500);
+        }
+    }
+
+    showRefreshSuccess() {
+        // Create temporary success indicator
+        const successIndicator = document.createElement('div');
+        successIndicator.className = 'refresh-success';
+        successIndicator.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"/>
+            </svg>
+            Data refreshed!
+        `;
+        
+        document.body.appendChild(successIndicator);
+        
+        // Remove after animation
+        setTimeout(() => {
+            successIndicator.remove();
+        }, 2000);
     }
 
     createImportModal() {
@@ -145,6 +214,14 @@ class CSVImporter {
         document.getElementById('importModal').addEventListener('click', (e) => {
             if (e.target.id === 'importModal') {
                 this.hideImportModal();
+            }
+        });
+
+        // Add keyboard shortcut for refresh (F5 or Ctrl+R)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                this.refreshData();
             }
         });
     }
