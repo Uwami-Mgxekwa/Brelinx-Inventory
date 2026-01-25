@@ -731,6 +731,399 @@ class InventoryApp {
         }
     }
 
+    // Reports View
+    async loadReportsView() {
+        const container = document.getElementById('reports-content');
+        
+        // Generate report data
+        const reportData = await this.generateReportData();
+        
+        const reportsHTML = `
+            <div class="reports-container">
+                <div class="reports-header">
+                    <h2>Inventory Reports</h2>
+                    <div class="report-actions">
+                        <button id="refreshReportsBtn" class="btn btn-secondary">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23,4 23,10 17,10"/>
+                                <polyline points="1,20 1,14 7,14"/>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                            </svg>
+                            Refresh
+                        </button>
+                        <button id="exportReportsBtn" class="btn btn-primary">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"/>
+                                <polyline points="7,10 12,15 17,10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Export All Reports
+                        </button>
+                    </div>
+                </div>
+
+                <div class="reports-grid">
+                    <!-- Summary Cards -->
+                    <div class="report-card summary-card">
+                        <h3>Inventory Summary</h3>
+                        <div class="summary-stats">
+                            <div class="summary-item">
+                                <span class="summary-label">Total Products:</span>
+                                <span class="summary-value">${reportData.summary.totalProducts}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Total Quantity:</span>
+                                <span class="summary-value">${reportData.summary.totalQuantity}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Total Value:</span>
+                                <span class="summary-value">R${reportData.summary.totalValue.toFixed(2)}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Low Stock Items:</span>
+                                <span class="summary-value ${reportData.summary.lowStockCount > 0 ? 'warning' : ''}">${reportData.summary.lowStockCount}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown -->
+                    <div class="report-card">
+                        <h3>Category Breakdown</h3>
+                        <div class="chart-container">
+                            <canvas id="categoryChart" width="300" height="200"></canvas>
+                        </div>
+                        <div class="category-legend">
+                            ${reportData.categories.map(cat => `
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background-color: ${cat.color}"></span>
+                                    <span class="legend-label">${cat.name} (${cat.count})</span>
+                                    <span class="legend-value">R${cat.value.toFixed(2)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Stock Status -->
+                    <div class="report-card">
+                        <h3>Stock Status Distribution</h3>
+                        <div class="stock-status-chart">
+                            <div class="status-bar">
+                                <div class="status-segment in-stock" style="width: ${reportData.stockStatus.inStockPercent}%">
+                                    <span class="status-label">In Stock (${reportData.stockStatus.inStock})</span>
+                                </div>
+                                <div class="status-segment low-stock" style="width: ${reportData.stockStatus.lowStockPercent}%">
+                                    <span class="status-label">Low Stock (${reportData.stockStatus.lowStock})</span>
+                                </div>
+                                <div class="status-segment out-of-stock" style="width: ${reportData.stockStatus.outOfStockPercent}%">
+                                    <span class="status-label">Out of Stock (${reportData.stockStatus.outOfStock})</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status-legend">
+                            <div class="legend-item">
+                                <span class="legend-color in-stock"></span>
+                                <span>In Stock: ${reportData.stockStatus.inStock} items (${reportData.stockStatus.inStockPercent.toFixed(1)}%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color low-stock"></span>
+                                <span>Low Stock: ${reportData.stockStatus.lowStock} items (${reportData.stockStatus.lowStockPercent.toFixed(1)}%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color out-of-stock"></span>
+                                <span>Out of Stock: ${reportData.stockStatus.outOfStock} items (${reportData.stockStatus.outOfStockPercent.toFixed(1)}%)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Products by Value -->
+                    <div class="report-card">
+                        <h3>Top Products by Value</h3>
+                        <div class="top-products-list">
+                            ${reportData.topProducts.map((product, index) => `
+                                <div class="top-product-item">
+                                    <span class="product-rank">#${index + 1}</span>
+                                    <div class="product-details">
+                                        <strong>${product.name}</strong>
+                                        <small>${product.sku} - ${product.category}</small>
+                                    </div>
+                                    <div class="product-value">
+                                        <span class="value-amount">R${product.totalValue.toFixed(2)}</span>
+                                        <small>${product.quantity} units</small>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Low Stock Alert -->
+                    <div class="report-card alert-card">
+                        <h3>Low Stock Alert</h3>
+                        ${reportData.lowStockItems.length === 0 ? `
+                            <div class="no-alerts">
+                                <svg class="alert-icon success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20,6 9,17 4,12"/>
+                                </svg>
+                                <p>All products are adequately stocked!</p>
+                            </div>
+                        ` : `
+                            <div class="alert-list">
+                                ${reportData.lowStockItems.slice(0, 5).map(item => `
+                                    <div class="alert-item">
+                                        <div class="alert-info">
+                                            <strong>${item.name}</strong>
+                                            <small>${item.sku}</small>
+                                        </div>
+                                        <div class="alert-status">
+                                            <span class="current-stock ${item.quantity === 0 ? 'out-of-stock' : 'low-stock'}">
+                                                ${item.quantity} / ${item.min_stock || 0}
+                                            </span>
+                                            <button class="btn btn-small btn-primary" onclick="app.quickRestock('${item.id}', '${item.name}')">
+                                                Restock
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                ${reportData.lowStockItems.length > 5 ? `
+                                    <div class="alert-more">
+                                        <a href="#" onclick="app.switchView('low-stock')">View all ${reportData.lowStockItems.length} low stock items →</a>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="report-card">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list">
+                            ${reportData.recentActivity.map(activity => `
+                                <div class="activity-item">
+                                    <div class="activity-icon ${activity.type}">
+                                        ${activity.type === 'added' ? '➕' : activity.type === 'updated' ? '✏️' : '📦'}
+                                    </div>
+                                    <div class="activity-details">
+                                        <span class="activity-text">${activity.text}</span>
+                                        <small class="activity-time">${activity.time}</small>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = reportsHTML;
+        this.setupReportsEventListeners();
+        this.drawCategoryChart(reportData.categories);
+    }
+
+    async generateReportData() {
+        // Calculate summary statistics
+        const totalProducts = this.inventoryItems.length;
+        const totalQuantity = this.inventoryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        const totalValue = this.inventoryItems.reduce((sum, item) => sum + ((item.quantity || 0) * (item.price || 0)), 0);
+        const lowStockItems = this.inventoryItems.filter(item => (item.quantity || 0) <= (item.min_stock || 0));
+        
+        // Category breakdown
+        const categoryStats = {};
+        const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14', '#20c997', '#6c757d'];
+        let colorIndex = 0;
+        
+        this.inventoryItems.forEach(item => {
+            if (!categoryStats[item.category]) {
+                categoryStats[item.category] = {
+                    name: item.category,
+                    count: 0,
+                    value: 0,
+                    color: colors[colorIndex % colors.length]
+                };
+                colorIndex++;
+            }
+            categoryStats[item.category].count++;
+            categoryStats[item.category].value += (item.quantity || 0) * (item.price || 0);
+        });
+        
+        const categories = Object.values(categoryStats);
+        
+        // Stock status distribution
+        const inStock = this.inventoryItems.filter(item => (item.quantity || 0) > (item.min_stock || 0)).length;
+        const lowStock = this.inventoryItems.filter(item => {
+            const qty = item.quantity || 0;
+            const minStock = item.min_stock || 0;
+            return qty > 0 && qty <= minStock;
+        }).length;
+        const outOfStock = this.inventoryItems.filter(item => (item.quantity || 0) === 0).length;
+        
+        const stockStatus = {
+            inStock,
+            lowStock,
+            outOfStock,
+            inStockPercent: totalProducts > 0 ? (inStock / totalProducts) * 100 : 0,
+            lowStockPercent: totalProducts > 0 ? (lowStock / totalProducts) * 100 : 0,
+            outOfStockPercent: totalProducts > 0 ? (outOfStock / totalProducts) * 100 : 0
+        };
+        
+        // Top products by value
+        const topProducts = this.inventoryItems
+            .map(item => ({
+                ...item,
+                totalValue: (item.quantity || 0) * (item.price || 0)
+            }))
+            .sort((a, b) => b.totalValue - a.totalValue)
+            .slice(0, 5);
+        
+        // Recent activity (simulated - in real app this would come from audit log)
+        const recentActivity = [
+            { type: 'added', text: 'New product added to Electronics', time: '2 hours ago' },
+            { type: 'updated', text: 'Stock updated for Laptop Computer', time: '4 hours ago' },
+            { type: 'restocked', text: 'Wireless Mouse restocked (+25 units)', time: '1 day ago' },
+            { type: 'added', text: 'New category "Office Supplies" created', time: '2 days ago' },
+            { type: 'updated', text: 'Price updated for Standing Desk', time: '3 days ago' }
+        ];
+        
+        return {
+            summary: {
+                totalProducts,
+                totalQuantity,
+                totalValue,
+                lowStockCount: lowStockItems.length
+            },
+            categories,
+            stockStatus,
+            topProducts,
+            lowStockItems,
+            recentActivity
+        };
+    }
+
+    drawCategoryChart(categories) {
+        const canvas = document.getElementById('categoryChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 20;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (categories.length === 0) {
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('No data available', centerX, centerY);
+            return;
+        }
+        
+        // Calculate total for percentages
+        const total = categories.reduce((sum, cat) => sum + cat.count, 0);
+        
+        // Draw pie chart
+        let currentAngle = -Math.PI / 2; // Start at top
+        
+        categories.forEach(category => {
+            const sliceAngle = (category.count / total) * 2 * Math.PI;
+            
+            // Draw slice
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+            ctx.closePath();
+            ctx.fillStyle = category.color;
+            ctx.fill();
+            
+            // Draw border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            currentAngle += sliceAngle;
+        });
+    }
+
+    setupReportsEventListeners() {
+        // Refresh reports
+        document.getElementById('refreshReportsBtn').addEventListener('click', () => {
+            this.loadReportsView();
+        });
+        
+        // Export all reports
+        document.getElementById('exportReportsBtn').addEventListener('click', () => {
+            this.exportAllReports();
+        });
+    }
+
+    async exportAllReports() {
+        try {
+            const reportData = await this.generateReportData();
+            const reportContent = this.generateReportCSV(reportData);
+            
+            const blob = new Blob([reportContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `inventory_reports_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            this.showSuccess('Reports exported successfully');
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showError('Failed to export reports');
+        }
+    }
+
+    generateReportCSV(reportData) {
+        let csv = 'INVENTORY REPORTS SUMMARY\n';
+        csv += `Generated on: ${new Date().toLocaleString()}\n\n`;
+        
+        // Summary section
+        csv += 'INVENTORY SUMMARY\n';
+        csv += 'Metric,Value\n';
+        csv += `Total Products,${reportData.summary.totalProducts}\n`;
+        csv += `Total Quantity,${reportData.summary.totalQuantity}\n`;
+        csv += `Total Value,R${reportData.summary.totalValue.toFixed(2)}\n`;
+        csv += `Low Stock Items,${reportData.summary.lowStockCount}\n\n`;
+        
+        // Category breakdown
+        csv += 'CATEGORY BREAKDOWN\n';
+        csv += 'Category,Product Count,Total Value\n';
+        reportData.categories.forEach(cat => {
+            csv += `"${cat.name}",${cat.count},R${cat.value.toFixed(2)}\n`;
+        });
+        csv += '\n';
+        
+        // Stock status
+        csv += 'STOCK STATUS\n';
+        csv += 'Status,Count,Percentage\n';
+        csv += `In Stock,${reportData.stockStatus.inStock},${reportData.stockStatus.inStockPercent.toFixed(1)}%\n`;
+        csv += `Low Stock,${reportData.stockStatus.lowStock},${reportData.stockStatus.lowStockPercent.toFixed(1)}%\n`;
+        csv += `Out of Stock,${reportData.stockStatus.outOfStock},${reportData.stockStatus.outOfStockPercent.toFixed(1)}%\n\n`;
+        
+        // Top products
+        csv += 'TOP PRODUCTS BY VALUE\n';
+        csv += 'Rank,Product Name,SKU,Category,Quantity,Total Value\n';
+        reportData.topProducts.forEach((product, index) => {
+            csv += `${index + 1},"${product.name}","${product.sku}","${product.category}",${product.quantity},R${product.totalValue.toFixed(2)}\n`;
+        });
+        csv += '\n';
+        
+        // Low stock items
+        if (reportData.lowStockItems.length > 0) {
+            csv += 'LOW STOCK ITEMS\n';
+            csv += 'Product Name,SKU,Current Stock,Min Stock,Category\n';
+            reportData.lowStockItems.forEach(item => {
+                csv += `"${item.name}","${item.sku}",${item.quantity || 0},${item.min_stock || 0},"${item.category}"\n`;
+            });
+        }
+        
+        return csv;
+    }
+
     getSampleData() {
         return [
             {
