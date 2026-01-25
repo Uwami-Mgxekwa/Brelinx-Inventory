@@ -195,6 +195,107 @@ class InventoryApp {
         }
     }
 
+    // Value protection system
+    isValueVisible() {
+        return localStorage.getItem('valueVisible') === 'true';
+    }
+
+    async promptForPIN() {
+        return new Promise((resolve) => {
+            const modalHTML = `
+                <div id="pinModal" class="modal active">
+                    <div class="modal-content" style="max-width: 400px;">
+                        <div class="modal-header">
+                            <h3>🔒 Enter PIN to View Values</h3>
+                        </div>
+                        <div class="modal-body">
+                            <p>Enter the PIN to view inventory values:</p>
+                            <div class="form-group">
+                                <input type="password" id="pinInput" placeholder="Enter PIN" maxlength="6" class="pin-input">
+                            </div>
+                            <div id="pinError" class="pin-error" style="display: none;">
+                                Incorrect PIN. Please try again.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="cancelPinBtn">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="submitPinBtn">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 12l2 2 4-4"/>
+                                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                                </svg>
+                                Unlock
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            const pinInput = document.getElementById('pinInput');
+            const pinError = document.getElementById('pinError');
+            
+            // Focus on input
+            pinInput.focus();
+            
+            const checkPIN = () => {
+                const enteredPIN = pinInput.value;
+                const correctPIN = localStorage.getItem('inventoryPIN') || '1234'; // Default PIN
+                
+                if (enteredPIN === correctPIN) {
+                    localStorage.setItem('valueVisible', 'true');
+                    document.getElementById('pinModal').remove();
+                    resolve(true);
+                } else {
+                    pinError.style.display = 'block';
+                    pinInput.value = '';
+                    pinInput.focus();
+                }
+            };
+            
+            // Event listeners
+            document.getElementById('submitPinBtn').onclick = checkPIN;
+            document.getElementById('cancelPinBtn').onclick = () => {
+                document.getElementById('pinModal').remove();
+                resolve(false);
+            };
+            
+            pinInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkPIN();
+                }
+            });
+        });
+    }
+
+    formatValue(value, showValue = null) {
+        if (showValue === null) {
+            showValue = this.isValueVisible();
+        }
+        
+        if (showValue) {
+            return `R${value.toFixed(2)}`;
+        } else {
+            return `<span class="hidden-value" onclick="app.showValue(this)" title="Click to reveal value">R****.**</span>`;
+        }
+    }
+
+    async showValue(element) {
+        const success = await this.promptForPIN();
+        if (success) {
+            // Refresh the current view to show values
+            if (this.currentView === 'dashboard') {
+                this.updateDashboard();
+            } else if (this.currentView === 'reports') {
+                this.loadReportsView();
+            } else if (this.currentView === 'categories') {
+                this.loadCategoriesView();
+            }
+        }
+    }
+
     // Manual refresh method that can be called from anywhere
     async refreshInventory() {
         console.log('Refreshing inventory data...');
@@ -418,7 +519,7 @@ class InventoryApp {
                                 </div>
                                 <div class="stat-item">
                                     <span class="stat-label">Total Value:</span>
-                                    <span class="stat-value">R${stat.totalValue.toFixed(2)}</span>
+                                    <span class="stat-value">${this.formatValue(stat.totalValue)}</span>
                                 </div>
                                 ${stat.lowStock > 0 ? `
                                     <div class="stat-item warning">
@@ -530,6 +631,44 @@ class InventoryApp {
                 </div>
 
                 <div class="settings-section">
+                    <h3>Security Settings</h3>
+                    <div class="setting-item">
+                        <label for="currentPIN">Current PIN:</label>
+                        <input type="password" id="currentPIN" placeholder="Enter current PIN" maxlength="6">
+                        <small>Required to change PIN</small>
+                    </div>
+                    <div class="setting-item">
+                        <label for="newPIN">New PIN:</label>
+                        <input type="password" id="newPIN" placeholder="Enter new PIN (4-6 digits)" maxlength="6">
+                        <small>Leave blank to keep current PIN (default: 1234)</small>
+                    </div>
+                    <div class="setting-item">
+                        <label for="confirmPIN">Confirm New PIN:</label>
+                        <input type="password" id="confirmPIN" placeholder="Confirm new PIN" maxlength="6">
+                    </div>
+                    <div class="setting-item">
+                        <button id="changePINBtn" class="btn btn-secondary">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <circle cx="12" cy="16" r="1"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                            Change PIN
+                        </button>
+                    </div>
+                    <div class="setting-item">
+                        <button id="resetValueVisibilityBtn" class="btn btn-warning">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            Reset Value Visibility
+                        </button>
+                        <small>Hide all values and require PIN entry again</small>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <h3>Data Management</h3>
                     <div class="setting-item">
                         <button id="exportDataBtn" class="btn btn-secondary">
@@ -621,6 +760,16 @@ class InventoryApp {
         document.getElementById('brelinxSettingsLink').addEventListener('click', (e) => {
             e.preventDefault();
             this.openBrelinxWebsite();
+        });
+
+        // PIN management
+        document.getElementById('changePINBtn').addEventListener('click', () => {
+            this.changePIN();
+        });
+
+        // Reset value visibility
+        document.getElementById('resetValueVisibilityBtn').addEventListener('click', () => {
+            this.resetValueVisibility();
         });
     }
 
@@ -777,7 +926,7 @@ class InventoryApp {
                             </div>
                             <div class="summary-item">
                                 <span class="summary-label">Total Value:</span>
-                                <span class="summary-value">R${reportData.summary.totalValue.toFixed(2)}</span>
+                                <span class="summary-value">${this.formatValue(reportData.summary.totalValue)}</span>
                             </div>
                             <div class="summary-item">
                                 <span class="summary-label">Low Stock Items:</span>
@@ -797,7 +946,7 @@ class InventoryApp {
                                 <div class="legend-item">
                                     <span class="legend-color" style="background-color: ${cat.color}"></span>
                                     <span class="legend-label">${cat.name} (${cat.count})</span>
-                                    <span class="legend-value">R${cat.value.toFixed(2)}</span>
+                                    <span class="legend-value">${this.formatValue(cat.value)}</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -847,7 +996,7 @@ class InventoryApp {
                                         <small>${product.sku} - ${product.category}</small>
                                     </div>
                                     <div class="product-value">
-                                        <span class="value-amount">R${product.totalValue.toFixed(2)}</span>
+                                        <span class="value-amount">${this.formatValue(product.totalValue)}</span>
                                         <small>${product.quantity} units</small>
                                     </div>
                                 </div>
@@ -1124,6 +1273,59 @@ class InventoryApp {
         return csv;
     }
 
+    async changePIN() {
+        const currentPIN = document.getElementById('currentPIN').value;
+        const newPIN = document.getElementById('newPIN').value;
+        const confirmPIN = document.getElementById('confirmPIN').value;
+
+        // Validate current PIN
+        const correctPIN = localStorage.getItem('inventoryPIN') || '1234';
+        if (currentPIN !== correctPIN) {
+            this.showError('Current PIN is incorrect');
+            return;
+        }
+
+        // Validate new PIN
+        if (newPIN && newPIN.length < 4) {
+            this.showError('New PIN must be at least 4 digits');
+            return;
+        }
+
+        if (newPIN && newPIN !== confirmPIN) {
+            this.showError('New PIN and confirmation do not match');
+            return;
+        }
+
+        // Update PIN if provided
+        if (newPIN) {
+            localStorage.setItem('inventoryPIN', newPIN);
+            this.showSuccess('PIN changed successfully');
+        } else {
+            this.showSuccess('PIN verified successfully');
+        }
+
+        // Clear form
+        document.getElementById('currentPIN').value = '';
+        document.getElementById('newPIN').value = '';
+        document.getElementById('confirmPIN').value = '';
+    }
+
+    resetValueVisibility() {
+        if (confirm('This will hide all inventory values and require PIN entry to view them again. Continue?')) {
+            localStorage.setItem('valueVisible', 'false');
+            this.showSuccess('Value visibility reset. Values are now hidden.');
+            
+            // Refresh current view to hide values
+            if (this.currentView === 'dashboard') {
+                this.updateDashboard();
+            } else if (this.currentView === 'reports') {
+                this.loadReportsView();
+            } else if (this.currentView === 'categories') {
+                this.loadCategoriesView();
+            }
+        }
+    }
+
     getSampleData() {
         return [
             {
@@ -1191,10 +1393,10 @@ class InventoryApp {
                 <td>${item.sku}</td>
                 <td>${item.category}</td>
                 <td>
-                    <span class="quantity-display ${this.getQuantityClass(item.quantity)}">
+                    <span class="quantity-display ${this.getQuantityClass(item.quantity, item.min_stock)}">
                         ${item.quantity}
                     </span>
-                    ${this.getStockStatus(item.quantity)}
+                    ${this.getStockStatus(item.quantity, item.min_stock)}
                 </td>
                 <td class="price-display">R${item.price.toFixed(2)}</td>
                 <td>
@@ -1222,16 +1424,16 @@ class InventoryApp {
         this.updateCategoryFilter();
     }
 
-    getQuantityClass(quantity) {
+    getQuantityClass(quantity, minStock = 0) {
         if (quantity === 0) return 'quantity-out';
-        if (quantity <= 5) return 'quantity-low';
+        if (quantity <= minStock) return 'quantity-low';
         return '';
     }
 
-    getStockStatus(quantity) {
+    getStockStatus(quantity, minStock = 0) {
         if (quantity === 0) {
             return '<span class="status-badge status-out-of-stock">Out of Stock</span>';
-        } else if (quantity <= 5) {
+        } else if (quantity <= minStock) {
             return '<span class="status-badge status-low-stock">Low Stock</span>';
         } else {
             return '<span class="status-badge status-in-stock">In Stock</span>';
@@ -1253,14 +1455,14 @@ class InventoryApp {
 
     updateDashboard() {
         const totalItems = this.inventoryItems.length;
-        const lowStockItems = this.inventoryItems.filter(item => item.quantity <= 5).length;
+        const lowStockItems = this.inventoryItems.filter(item => item.quantity <= (item.min_stock || 0)).length;
         const categories = new Set(this.inventoryItems.map(item => item.category)).size;
         const totalValue = this.inventoryItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
 
         document.getElementById('totalItems').textContent = totalItems;
         document.getElementById('lowStockItems').textContent = lowStockItems;
         document.getElementById('totalCategories').textContent = categories;
-        document.getElementById('totalValue').textContent = `R${totalValue.toFixed(2)}`;
+        document.getElementById('totalValue').innerHTML = this.formatValue(totalValue);
     }
 
     showAddItemModal() {
@@ -1308,8 +1510,154 @@ class InventoryApp {
     }
 
     async editItem(id) {
-        // TODO: Implement edit functionality
-        console.log('Edit item:', id);
+        try {
+            // Get the product details
+            const product = this.inventoryItems.find(item => item.id === id);
+            if (!product) {
+                this.showError('Product not found');
+                return;
+            }
+            
+            // Show edit modal with current values
+            this.showEditItemModal(product);
+        } catch (error) {
+            console.error('Error editing item:', error);
+            this.showError('Failed to edit item');
+        }
+    }
+
+    showEditItemModal(product) {
+        const modalHTML = `
+            <div id="editItemModal" class="modal active">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Edit Product</h3>
+                        <button class="modal-close" id="editModalClose">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <form id="editItemForm" class="modal-body">
+                        <div class="form-group">
+                            <label for="editItemName">Item Name</label>
+                            <input type="text" id="editItemName" value="${product.name}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemSku">SKU</label>
+                            <input type="text" id="editItemSku" value="${product.sku}" required readonly>
+                            <small>SKU cannot be changed</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemCategory">Category</label>
+                            <input type="text" id="editItemCategory" value="${product.category}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemQuantity">Quantity</label>
+                            <input type="number" id="editItemQuantity" value="${product.quantity}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemPrice">Price</label>
+                            <input type="number" id="editItemPrice" value="${product.price}" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemCost">Cost</label>
+                            <input type="number" id="editItemCost" value="${product.cost || ''}" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemMinStock">Min Stock</label>
+                            <input type="number" id="editItemMinStock" value="${product.min_stock || ''}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemMaxStock">Max Stock</label>
+                            <input type="number" id="editItemMaxStock" value="${product.max_stock || ''}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemSupplier">Supplier</label>
+                            <input type="text" id="editItemSupplier" value="${product.supplier || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemBarcode">Barcode</label>
+                            <input type="text" id="editItemBarcode" value="${product.barcode || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label for="editItemDescription">Description</label>
+                            <textarea id="editItemDescription" rows="3">${product.description || ''}</textarea>
+                        </div>
+                    </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                        <button type="submit" form="editItemForm" class="btn btn-primary">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20,6 9,17 4,12"/>
+                            </svg>
+                            Update Item
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Event listeners
+        document.getElementById('editModalClose').onclick = () => this.hideEditItemModal();
+        document.getElementById('cancelEditBtn').onclick = () => this.hideEditItemModal();
+        document.getElementById('editItemForm').onsubmit = (e) => {
+            e.preventDefault();
+            this.updateItem(product.id);
+        };
+        
+        // Focus on name field
+        document.getElementById('editItemName').focus();
+    }
+
+    hideEditItemModal() {
+        const modal = document.getElementById('editItemModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    async updateItem(id) {
+        const updates = {
+            name: document.getElementById('editItemName').value,
+            category: document.getElementById('editItemCategory').value,
+            quantity: parseInt(document.getElementById('editItemQuantity').value),
+            price: parseFloat(document.getElementById('editItemPrice').value),
+            cost: parseFloat(document.getElementById('editItemCost').value) || 0,
+            min_stock: parseInt(document.getElementById('editItemMinStock').value) || 0,
+            max_stock: parseInt(document.getElementById('editItemMaxStock').value) || null,
+            supplier: document.getElementById('editItemSupplier').value,
+            barcode: document.getElementById('editItemBarcode').value,
+            description: document.getElementById('editItemDescription').value
+        };
+
+        try {
+            if (window.electronAPI && window.electronAPI.updateInventoryItem) {
+                const result = await window.electronAPI.updateInventoryItem(id, updates);
+                if (result.success) {
+                    // Update local data
+                    const itemIndex = this.inventoryItems.findIndex(item => item.id === id);
+                    if (itemIndex !== -1) {
+                        this.inventoryItems[itemIndex] = { ...this.inventoryItems[itemIndex], ...updates };
+                    }
+                    
+                    this.hideEditItemModal();
+                    this.renderInventoryTable();
+                    this.updateDashboard();
+                    this.showSuccess('Item updated successfully!');
+                } else {
+                    throw new Error(result.error || 'Failed to update item');
+                }
+            } else {
+                throw new Error('Update API not available');
+            }
+        } catch (error) {
+            console.error('Error updating item:', error);
+            this.showError('Failed to update item');
+        }
     }
 
     async deleteItem(id) {
