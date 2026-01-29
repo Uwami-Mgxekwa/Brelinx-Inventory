@@ -83,6 +83,22 @@ class InventoryApp {
         }
     }
 
+    openMobileScanner() {
+        // Open mobile scanner in a new window
+        const scannerWindow = window.open(
+            'mobile-scanner.html', 
+            'MobileScanner',
+            'width=400,height=700,resizable=yes,scrollbars=yes'
+        );
+        
+        if (scannerWindow) {
+            scannerWindow.focus();
+        } else {
+            // Fallback if popup blocked
+            window.location.href = 'mobile-scanner.html';
+        }
+    }
+
     setupEventListeners() {
         // Navigation
         document.querySelectorAll('.nav-link').forEach(link => {
@@ -96,6 +112,11 @@ class InventoryApp {
         // Add Item Button
         document.getElementById('addItemBtn').addEventListener('click', () => {
             this.showAddItemModal();
+        });
+
+        // Mobile Scanner Button
+        document.getElementById('mobileScannerBtn').addEventListener('click', () => {
+            this.openMobileScanner();
         });
 
         // Logout Button

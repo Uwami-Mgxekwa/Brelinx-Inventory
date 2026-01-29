@@ -29,18 +29,20 @@
 
         .header {
             text-align: center;
-            padding: 2rem 0;
+            padding: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
         }
 
-        .subtitle {
-            opacity: 0.8;
-            font-size: 0.9rem;
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
         }
 
         .scanner-section {
@@ -117,6 +119,11 @@
             gap: 0.5rem;
         }
 
+        .btn-small {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+
         .btn-primary {
             background: #2ECC71;
             color: white;
@@ -137,10 +144,24 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
+        }
+
+        .btn-icon {
+            width: 16px;
+            height: 16px;
         }
 
         .status {
@@ -149,19 +170,20 @@
             border-radius: 8px;
             margin: 1rem 0;
             font-weight: 500;
+            display: none;
         }
 
-        .status-success {
+        .status.success {
             background: rgba(46, 204, 113, 0.2);
             border: 1px solid rgba(46, 204, 113, 0.5);
         }
 
-        .status-error {
+        .status.error {
             background: rgba(231, 76, 60, 0.2);
             border: 1px solid rgba(231, 76, 60, 0.5);
         }
 
-        .status-info {
+        .status.info {
             background: rgba(52, 152, 219, 0.2);
             border: 1px solid rgba(52, 152, 219, 0.5);
         }
@@ -183,7 +205,7 @@
             font-weight: 500;
         }
 
-        .form-group input, .form-group select {
+        .form-group input {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -197,7 +219,7 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus {
             outline: none;
             border-color: #2ECC71;
             box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2);
@@ -208,29 +230,198 @@
         }
 
         .recent-scans {
-            margin-top: 2rem;
+            margin-top: 1rem;
         }
 
         .recent-scans h3 {
             margin-bottom: 1rem;
             opacity: 0.9;
+            font-size: 1rem;
         }
 
-        .scan-item {
+        .recent-scan-item {
             background: rgba(255, 255, 255, 0.1);
             padding: 0.75rem;
             border-radius: 6px;
             margin-bottom: 0.5rem;
             font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .scan-item strong {
+        .recent-scan-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .scan-barcode {
+            font-weight: 600;
+        }
+
+        .scan-time {
+            opacity: 0.7;
+            font-size: 0.8rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            opacity: 0.7;
+            padding: 2rem;
+        }
+
+        .scan-result-item {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .scan-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .scan-result-header h3 {
+            color: #2ECC71;
+            font-size: 1rem;
+        }
+
+        .scan-timestamp {
+            opacity: 0.8;
+            font-size: 0.8rem;
+        }
+
+        .scan-result-barcode {
+            margin: 0.5rem 0;
+            font-family: monospace;
+        }
+
+        .scan-result-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .product-info-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .product-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .product-source {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .product-source.local {
+            background: rgba(46, 204, 113, 0.3);
+            color: #2ECC71;
+        }
+
+        .product-source.external {
+            background: rgba(52, 152, 219, 0.3);
+            color: #3498db;
+        }
+
+        .inventory-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .inventory-stat {
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .stat-label {
             display: block;
+            font-size: 0.8rem;
+            opacity: 0.8;
             margin-bottom: 0.25rem;
         }
 
-        .scan-item small {
+        .stat-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .stat-value.low-stock {
+            color: #f39c12;
+        }
+
+        .product-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .no-product-found, .lookup-error {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .no-product-icon, .error-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
             opacity: 0.7;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #2ECC71;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .settings-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
         }
     </style>
 </head>
@@ -238,7 +429,20 @@
     <div class="container">
         <div class="header">
             <div class="logo">📱 Brelinx Scanner</div>
-            <div class="subtitle">Mobile Inventory Scanner</div>
+            <div class="header-actions">
+                <button id="settingsToggle" class="btn btn-small btn-secondary">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </button>
+                <button id="backToMainBtn" class="btn btn-small btn-secondary">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5"/>
+                        <polyline points="12,19 5,12 12,5"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <div class="scanner-section">
@@ -247,53 +451,69 @@
                 <div class="scanner-overlay"></div>
             </div>
 
-            <div id="status" class="status hidden"></div>
+            <div id="status" class="status"></div>
 
             <div class="controls">
                 <button id="startScanBtn" class="btn btn-primary">
-                    📷 Start Camera
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span class="btn-text">Start Scanning</span>
                 </button>
-                <button id="stopScanBtn" class="btn btn-secondary hidden">
-                    ⏹️ Stop Camera
-                </button>
-                <button id="toggleManualBtn" class="btn btn-secondary">
-                    ⌨️ Manual Entry
-                </button>
+
+                <div class="camera-controls">
+                    <button id="flashToggle" class="btn btn-small btn-secondary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                        Flash
+                    </button>
+                    <button id="cameraSwitchBtn" class="btn btn-small btn-secondary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                        </svg>
+                        Switch
+                    </button>
+                </div>
             </div>
 
-            <div id="manualEntry" class="manual-entry hidden">
-                <h3>Manual Product Entry</h3>
-                <form id="manualForm">
+            <div class="manual-entry">
+                <h3>Manual Barcode Entry</h3>
+                <form id="manualBarcodeForm">
                     <div class="form-group">
-                        <label for="barcode">Barcode/SKU:</label>
-                        <input type="text" id="barcode" placeholder="Enter barcode or SKU" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="action">Action:</label>
-                        <select id="action" required>
-                            <option value="">Select action...</option>
-                            <option value="add">Add Stock (+)</option>
-                            <option value="remove">Remove Stock (-)</option>
-                            <option value="count">Stock Count</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="quantity">Quantity:</label>
-                        <input type="number" id="quantity" placeholder="Enter quantity" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="notes">Notes (optional):</label>
-                        <input type="text" id="notes" placeholder="Reason or notes">
+                        <label for="manualBarcode">Barcode/SKU:</label>
+                        <input type="text" id="manualBarcode" placeholder="Enter barcode manually" required>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        ✅ Submit Entry
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        Process Barcode
                     </button>
                 </form>
             </div>
 
-            <div id="recentScans" class="recent-scans">
-                <h3>Recent Scans</h3>
-                <div id="scansList"></div>
+            <div id="settingsPanel" class="settings-panel">
+                <h3>Settings</h3>
+                <form id="apiEndpointForm">
+                    <div class="form-group">
+                        <label for="apiEndpointInput">API Endpoint:</label>
+                        <input type="url" id="apiEndpointInput" placeholder="http://localhost:3000">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
+
+            <div id="scanResult" style="display: none;"></div>
+            <div id="productInfo" style="display: none;"></div>
+
+            <div class="recent-scans">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>Recent Scans</h3>
+                    <button id="clearScansBtn" class="btn btn-small btn-secondary">Clear</button>
+                </div>
+                <div id="recentScans"></div>
             </div>
         </div>
     </div>
