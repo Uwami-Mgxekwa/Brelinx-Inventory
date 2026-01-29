@@ -294,7 +294,8 @@ class MobileInventoryApp {
     }
 
     updateDashboard() {
-        const totalItems = this.products.reduce((sum, product) => sum + product.quantity, 0);
+        const totalItems = this.products.length; // Count of unique products (matches desktop)
+        const totalQuantity = this.products.reduce((sum, product) => sum + product.quantity, 0); // Total quantity in stock
         const lowStockItems = this.products.filter(product => product.quantity <= product.min_stock).length;
         const totalCategories = [...new Set(this.products.map(p => p.category))].length;
         const totalValue = this.products.reduce((sum, product) => sum + (product.quantity * product.price), 0);
@@ -444,7 +445,8 @@ class MobileInventoryApp {
     renderReports() {
         const container = document.getElementById('reportsContent');
         
-        const totalItems = this.products.reduce((sum, product) => sum + product.quantity, 0);
+        const totalProducts = this.products.length; // Count of unique products
+        const totalQuantity = this.products.reduce((sum, product) => sum + product.quantity, 0); // Total items in stock
         const lowStockItems = this.products.filter(product => product.quantity <= product.min_stock).length;
         const totalValue = this.products.reduce((sum, product) => sum + (product.quantity * product.price), 0);
         const totalCost = this.products.reduce((sum, product) => sum + (product.quantity * product.cost), 0);
@@ -455,12 +457,12 @@ class MobileInventoryApp {
         container.innerHTML = `
             <div class="stats-grid">
                 <div class="stat-card">
-                    <span class="stat-number">${this.products.length}</span>
-                    <div class="stat-label">Total Products</div>
+                    <span class="stat-number">${totalProducts}</span>
+                    <div class="stat-label">Products</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-number">${totalItems}</span>
-                    <div class="stat-label">Total Items</div>
+                    <span class="stat-number">${totalQuantity}</span>
+                    <div class="stat-label">Items in Stock</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-number">${lowStockItems}</span>
@@ -477,8 +479,8 @@ class MobileInventoryApp {
                     <h3 class="card-title">Inventory Summary</h3>
                 </div>
                 <div class="card-body">
-                    <p><strong>Total Products:</strong> ${this.products.length}</p>
-                    <p><strong>Total Items in Stock:</strong> ${totalItems}</p>
+                    <p><strong>Total Products:</strong> ${totalProducts}</p>
+                    <p><strong>Total Items in Stock:</strong> ${totalQuantity}</p>
                     <p><strong>Low Stock Alerts:</strong> ${lowStockItems}</p>
                     <p><strong>Total Inventory Value:</strong> ${displayTotalValue}</p>
                     <p><strong>Total Inventory Cost:</strong> ${displayTotalCost}</p>
@@ -766,7 +768,7 @@ class MobileInventoryApp {
             generated: new Date().toISOString(),
             summary: {
                 totalProducts: this.products.length,
-                totalItems: this.products.reduce((sum, product) => sum + product.quantity, 0),
+                totalQuantity: this.products.reduce((sum, product) => sum + product.quantity, 0),
                 lowStockItems: this.products.filter(product => product.quantity <= product.min_stock).length,
                 totalValue: this.products.reduce((sum, product) => sum + (product.quantity * product.price), 0)
             },

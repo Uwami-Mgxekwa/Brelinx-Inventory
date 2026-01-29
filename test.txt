@@ -9,3 +9,5 @@ Commit 8 at  with random: 26634
 Commit 9 at  with random: 42972 
 Commit 10 at  with random: 16369 
 Commit 11 at  with random: 25344 
+Commit 12 at  with random: 22750 
+Commit 13 at  with random: 18793 
