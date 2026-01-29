@@ -64,6 +64,9 @@ class MobileInventoryApp {
         document.getElementById('navClose').addEventListener('click', () => this.closeNav());
         document.getElementById('overlay').addEventListener('click', () => this.closeNav());
 
+        // Handle window resize for responsive behavior
+        window.addEventListener('resize', () => this.handleResize());
+
         // View navigation
         document.querySelectorAll('[data-view]').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -97,6 +100,31 @@ class MobileInventoryApp {
 
         // Reports
         document.getElementById('exportReportsBtn').addEventListener('click', () => this.exportReports());
+
+        // Close nav when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            const nav = document.getElementById('mobileNav');
+            const menuToggle = document.getElementById('menuToggle');
+            
+            if (window.innerWidth < 1024 && 
+                nav.classList.contains('active') && 
+                !nav.contains(e.target) && 
+                !menuToggle.contains(e.target)) {
+                this.closeNav();
+            }
+        });
+    }
+
+    handleResize() {
+        // Close nav on resize to prevent layout issues
+        if (window.innerWidth >= 1024) {
+            // Desktop view - ensure nav is visible and overlay is hidden
+            const nav = document.getElementById('mobileNav');
+            const overlay = document.getElementById('overlay');
+            nav.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
     }
 
     registerServiceWorker() {
@@ -201,6 +229,13 @@ class MobileInventoryApp {
         
         nav.classList.toggle('active');
         overlay.classList.toggle('active');
+        
+        // Prevent body scroll when nav is open
+        if (nav.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
     }
 
     closeNav() {
@@ -209,6 +244,7 @@ class MobileInventoryApp {
         
         nav.classList.remove('active');
         overlay.classList.remove('active');
+        document.body.style.overflow = '';
     }
 
     showView(viewName) {
@@ -230,6 +266,8 @@ class MobileInventoryApp {
         });
 
         this.currentView = viewName;
+        
+        // Always close nav on mobile when switching views
         this.closeNav();
 
         // Load view-specific data
