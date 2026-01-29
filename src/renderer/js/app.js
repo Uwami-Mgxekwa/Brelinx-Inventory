@@ -99,6 +99,22 @@ class InventoryApp {
         }
     }
 
+    openMobileApp() {
+        // Open mobile app in a new window/tab
+        const mobileWindow = window.open(
+            'mobile-app.html', 
+            'MobileApp',
+            'width=400,height=800,resizable=yes,scrollbars=yes'
+        );
+        
+        if (mobileWindow) {
+            mobileWindow.focus();
+        } else {
+            // Fallback if popup blocked
+            window.location.href = 'mobile-app.html';
+        }
+    }
+
     setupEventListeners() {
         // Navigation
         document.querySelectorAll('.nav-link').forEach(link => {
@@ -117,6 +133,11 @@ class InventoryApp {
         // Mobile Scanner Button
         document.getElementById('mobileScannerBtn').addEventListener('click', () => {
             this.openMobileScanner();
+        });
+
+        // Mobile App Button
+        document.getElementById('mobileAppBtn').addEventListener('click', () => {
+            this.openMobileApp();
         });
 
         // Logout Button
